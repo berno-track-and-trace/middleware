@@ -5,6 +5,7 @@ import { needToReInit, printingScanning } from '../utils/globalEventEmitter.js';
 import { EventEmitter } from 'events';
 import pkg from 'node-libgpiod';
 import Queue from '../utils/queue.js';
+import {serCamLogger} from '../utils/logger.js'
 
 const { version, Chip, Line } = pkg;
 // import { eventNames } from 'process';
@@ -65,10 +66,10 @@ export default class serCam {
                     const currentPrintSignalCount = this.printedTimeOutQueue.size()
                     await new Promise(resolve => setTimeout(resolve, 5000));
                     if (currentPrintSignalCount<this.printedTimeOutQueue.size()){
-                        console.log("[SerCam] The camera sensor might be disconnected from GPIO, please check the connection")
+                        serCamLogger.error("[SerCam] The camera sensor might be disconnected from GPIO, please check the connection")
                         needToReInit.emit("pleaseReInit", "serCam", "sensor might be disconnected to GPIO", true); 
                     }else{
-                        console.log("[SerCam] The camera sensor might be disconnected from GPIO or the conveyor is not running")
+                        serCamLogger.warn("[SerCam] The camera sensor might be disconnected from GPIO or the conveyor is not running")
                     }
                     while(!this.printedTimeOutQueue.isEmpty()){
                         const data = this.printedTimeOutQueue.dequeue()
@@ -89,14 +90,14 @@ export default class serCam {
                 clearTimeout(this.rejectTimeOut)
                 clearInterval(this.sensorReadingInterval)
                 this.rejection.removeAllListeners()
-                console.log("[serCam] sensor triggered")
+                serCamLogger.info("Sensor is triggered")
                 let printed=null;
                 if(!this.printedTimeOutQueue.isEmpty()){
                     printed = this.printedTimeOutQueue.dequeue();
                     clearTimeout(printed.timeOut)
                 }
                 this.rejectTimeOut = setTimeout( async ()=>{
-                    console.log("rejector got time out")
+                    serCamLogger.error("Time out occured while waiting data from camera")
 
                     
 
@@ -129,7 +130,7 @@ export default class serCam {
                     this.setIntervalSensorReading(50);
                 })
                 this.rejection.once("pass", async ()=>{
-                    console.log("[SerCam] an object is passed")
+                    serCamLogger.info("An object is passed")
 
                     this.rejection.removeAllListeners()
                     while(this.line.getValue()===1){
@@ -153,12 +154,13 @@ export default class serCam {
                     this.socket.write(message, 'utf8');  // Sending as UTF-8 encoded string
                     this.healthCheckTimeout = setTimeout(()=>{
                     this.running = false;
-                    needToReInit.emit("pleaseReInit", "serCam", "timed out"); // ask to re-init
+                    needToReInit.emit("pleaseReInit", "serCam", "timed out occured on health check"); // ask to re-init
+                    serCamLogger.error("timed out occured on health check")
                     },500);
 
                 }
             } catch (error) {   
-                console.log("[serCam] healthchek error : ", error)
+                serCamLogger.error("Healthcheck error : ", error)
             }
             
         }, normalOperationFlag?this.hcTimeInterval+this.hcTimeTolerance:this.hcTimeInterval)
@@ -184,7 +186,7 @@ export default class serCam {
                     this.socket.removeAllListeners();
                     this.listenerThread = this.listenForResponses();
                     this.setHealthCheckInterval();
-                    console.log("[Ser Cam] Socket established");
+                    serCamLogger.info(`The Socket established on ${this.ip} : ${this.port}`);
                     resolve();
                 });
                     this.socket.once('error', (err) => {
@@ -212,7 +214,7 @@ export default class serCam {
         this.running = false;
         this.socket.removeAllListeners();
         this.socket.destroy();
-        console.log("[Ser Cam] Disconnected");
+        serCamLogger.info("Disconnected");
     }
     separateStringToObject(input) {
         // Split the input string by ":"
@@ -249,8 +251,8 @@ export default class serCam {
                         // console.log("[Ser Cam] Status is ok")
                     }else{
 
-                        console.log("[Ser Cam] Camera error code found : ", responseString[2])
-                        needToReInit.emit("pleaseReInit", "serCam");
+                        serCamLogger.error("[Ser Cam] Camera error code found : ", responseString[2])
+                        needToReInit.emit("pleaseReInit", "serCam", "Camera error code found");
                     }
                 }
                 else{
@@ -269,14 +271,14 @@ export default class serCam {
 
         this.socket.on('error', (err) => {
             clearInterval(this.healthCheckInterval);
-            needToReInit.emit("pleaseReInit", "serCam");
-            console.error("[Ser Cam] Error listening for responses:", err);
+            needToReInit.emit("pleaseReInit", "serCam", "Error listening for responses");
+            serCamLogger.error("Error listening for responses:", err);
         });
 
         this.socket.on('close', () => {
             clearInterval(this.healthCheckInterval);
             needToReInit.emit("pleaseReInit", "serCam")
-            console.log("[Ser Cam] Listening stopped");
+            serCamLogger.info("[Ser Cam] Listening stopped");
             this.running = false;
         });
     }
@@ -289,8 +291,8 @@ export default class serCam {
         let reason="success"
         let code = data.code
         if (identifikasi_pattern.test(code) || otentifikasi_pattern1.test(code) || otentifikasi_pattern2.test(code)) {
-            console.log("[Ser Cam] Data is in a correct format:", code);
-            console.log(data.accuracy)
+            // serCamLogger.info({'status':"Data is in a correct format:", 'code':code, 'accuracy':});
+            // console.log(data.accuracy)
             if (this.accuracyThreshold<=data.accuracy){
                 result = true
                 
@@ -301,15 +303,20 @@ export default class serCam {
             
         } else {
             if (code==="ERROR;" || code===null){
-                data.code=null
+                code=null
                 reason = "QR_NOT_FOUND"
             }else{
                 reason = "PATTERN_MISMATCH"
             }
-            console.log(`[Ser Cam] Data is in bad format or ERROR: ${reason} on scanned code: ${code}`);
+            // serCamLogger.info(`[Ser Cam] Data is in bad format or ERROR: ${reason} on scanned code: ${code}`);
             result = false;
             
         }
+        serCamLogger({
+            'result':result,
+            'reason':reason,
+            'code' : code
+        })
 
         return {result,reason,code}
     }
@@ -317,15 +324,17 @@ export default class serCam {
     async receiveData(data, printed) {
         
         // console.log("String2 : ",data) // uncomment this for debugging
+        try{
         const check = this.checkFormat(data)
         
             if(!check.result){
                 
                 this.rejection.emit("reject")
-                console.log("emit reject")
+                serCamLogger.info("emit reject")
             }else{
 
                 this.rejection.emit("pass")
+                serCamLogger.info("emit pass")
 
             }
             await postDataToAPI(`v1/work-order/${printingProcess.work_order_id}/assignment/${printingProcess.assignment_id}/serialization/validate`,{ 
@@ -336,7 +345,12 @@ export default class serCam {
                 event_time:Date.now()
             }) 
     
+
+        }catch(error){
+            serCamLogger.error("error after receiving data: ", error)
+        }
     }
+
     
         
 }

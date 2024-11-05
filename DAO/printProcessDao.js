@@ -39,6 +39,7 @@ import { masterConfig } from '../index.js';
 import { clearInterval } from 'timers';
 import { clear, time } from 'console';
 import { needToReInit, printingScanning } from '../utils/globalEventEmitter.js';
+import {printPLogger, mongoDBLogger} from '../utils/logger.js'
 // import { emit } from 'process';
 export default class printProcess {
     constructor(printer, mongoDB, sensor) {
@@ -89,7 +90,7 @@ export default class printProcess {
                 throw new Error(`Product ID ${this.product_id} not found `);
             }
 
-            console.log(JSON.stringify(work_order))
+            printPLogger.info({"codeDetails":work_order})
             this.mongoDB.setHealthCheck();
             return {
                 NIE: product.nie,
@@ -100,7 +101,7 @@ export default class printProcess {
                 UNIT:work_order.unit_per_box
             };
         } catch (err) {
-            console.error('Error getting code details:', err);
+            printPLogger.error('Error getting code details:', err);
             
             return err;
         }
@@ -153,11 +154,11 @@ export default class printProcess {
                 }
     
             } catch (error) {
-                console.log(`[Print Process] Attempt ${attempts + 1} failed:`, error);
+                printPLogger.warn(`Attempt ${attempts + 1} failed:`, error);
                 attempts++;
     
                 if (attempts >= maxRetries) {
-                    console.log("[Print Process] Max retries reached. Error on getting data by smallest id:", error);
+                    printPLogger.error("Max retries reached. Error on getting data by smallest id:", error);
                     // this.dbManualHealthCheck();
                     return { status: 'max_retries_reached', error }; // Max retries reached
                 }
@@ -191,19 +192,19 @@ export default class printProcess {
                 const result = await Promise.race([updateOperation, timeout]);
                 this.mongoDB.setHealthCheck();
                 if (result.modifiedCount === 1) {
-                    console.log(`Successfully updated status to '${status}' for document with id: ${serializationId}`);
+                    printPLogger.info(`Successfully updated status to '${status}' for document with id: ${serializationId}`);
                     return { status: 'success', updatedId: serializationId };
                 } else {
-                    console.log(`No document found with id: ${serializationId} to update.`);
+                    printPLogger.info(`No document found with id: ${serializationId} to update.`);
                     return { status: 'not_found', updatedId: serializationId };
                 }
     
             } catch (error) {
-                console.log(`[Update Status] Attempt ${attempts + 1} failed:`, error);
+                printPLogger.warn(`[Update Status] Attempt ${attempts + 1} failed:`, error);
                 attempts++;
     
                 if (attempts >= maxRetries) {
-                    console.log(`[Update Status] Max retries reached. Error updating status for id: ${serializationId}`, error);
+                    printPLogger.error(`[Update Status] Max retries reached. Error updating status for id: ${serializationId}`, error);
                     return { status: 'max_retries_reached', error };
                 }
     
@@ -220,7 +221,7 @@ export default class printProcess {
         let attempts = 0;
         const maxRetries = 1;
         const retryDelay = 1000;
-        console.log("fetching data after id : ", startingId)
+        printPLogger.info("fetching data after id : ", startingId)
         while (attempts < maxRetries) {
             try {
                 if (this.mongoDB.healthCheckInterval) {
@@ -229,7 +230,7 @@ export default class printProcess {
                 }
                 // Adjusted query to start fetching data from the next available ID after the inputted startingId
                 const limit = maxResults
-                console.log(`Fetching new List GT: ${currentId} with limit ${limit}`)
+                printPLogger.info(`Fetching new List GT: ${currentId} with limit ${limit}`)
                 const queryPromise = db.collection('serialization').aggregate(
                     [
                         {
@@ -270,15 +271,15 @@ export default class printProcess {
                     break;
                 } else {
                     // If no data found, exit the loop
-                    console.log('No more data available starting from the given ID.');
+                    printPLogger.info('No more data available starting from the given ID.');
                     break;
                 }
             } catch (error) {
-                console.log(`[Fetch Data] Attempt ${attempts + 1} failed:`, error);
+                printPLogger.warn(`[Fetch Data] Attempt ${attempts + 1} failed:`, error);
                 attempts++;
         
                 if (attempts >= maxRetries) {
-                    console.log("[Fetch Data] Max retries reached. Exiting the loop.");
+                    printPLogger.error("[Fetch Data] Max retries reached. Exiting the loop.");
                     return { status: 'max_retries_reached', error };
 
                 }
@@ -301,15 +302,15 @@ export default class printProcess {
     async dbManualHealthCheck() {
         try {
             let timeout = setTimeout(()=>{
-                console.log("[Print Process] timed out occured while trying to do health check manually")
-                needToReInit.emit("pleaseReInit","MongoDB")
+                mongoDBLogger.error("timed out occured while trying to do health check manually")
+                needToReInit.emit("pleaseReInit","MongoDB", "timed out occured while trying to do health check manually")
                 this.printer.isOccupied=false;
             }, 1000)
             const serverStatus =  await this.client.db('admin').command({ serverStatus: 1 }); // only for health check, checking if the collection is exist
             clearTimeout(timeout);
             
         } catch (error) {
-            console.log("[Print Process] Error out occured while trying to do health check manually ",error)
+            mongoDBLogger.log("Error occured while trying to do health check manually ",error)
         }
         
     }
@@ -324,13 +325,13 @@ export default class printProcess {
                 queue.enqueue(serialization);
             });
             // if (queue.size()<10){this.completion=true;}
-            console.log("[Printing Process] Data enqueued successfully.");
+            printPLogger.info("Data enqueued successfully.");
         } else if (fetchResult.status === 'no_data_found') {
-            console.log("[Printing Process] No data found to enqueue.");
+            printPLogger.info("No data found to enqueue.");
             this.serializationQueue2.clear()
             // this.completion=true;
         } else if (fetchResult.status === 'max_retries_reached') {
-            console.error("[Printing Process] Failed to fetch data after maximum retries.");
+            printPLogger.error("Failed to fetch data after maximum retries.");
             this.abort()
         }
     }
@@ -349,6 +350,7 @@ export default class printProcess {
     }
     async printSetupChecks() {
         try {
+            printPLogger.info("Running print setup checks...")
             this.error_full_code_queue.clear();
             this.serializationQueue1.clear();
             this.serializationQueue2.clear();
@@ -370,7 +372,7 @@ export default class printProcess {
             await new Promise(resolve => setTimeout(resolve, 1000));
 
             const msg =printerTemplate[this.templateName](this.details,"QR003") 
-            console.log("template name : ", this.templateName)
+            printPLogger.info("using template name : ", this.templateName)
             
             await this.printer.send(msg)
             await new Promise(resolve => setTimeout(resolve, 1000));
@@ -381,17 +383,17 @@ export default class printProcess {
 
 
             const ress = await this.printer.send("1E055152303033")
-            console.log("response from sending 1E", ress)
+            // console.log("response from sending 1E", ress)
             await new Promise(resolve => setTimeout(resolve, 1000));
 
             const ress1 = await this.printer.send("01") 
-            console.log("response from sending 01", ress1)
+            // console.log("response from sending 01", ress1)
             await new Promise(resolve => setTimeout(resolve, 1000));
-            console.log("[Printing Process] filling up the first 10 buffers...")
+            printPLogger.info("filling up the first 10 buffers...")
             while (serialization.status === undefined && (P_status === "no errors" || P_status=== "still full")){ // filling up the buffer first
                 const messages = [`SN ${serialization.SN}`, serialization.full_code]
-                console.log("[Printing Process] messages to be sent", messages)
                 P_status = await this.printer.sendRemoteFieldData(messages) // goes to printer buffer
+                printPLogger.info("sent messages", messages)
                 this.expectedBufferCount++;
                 let updateTimeOut = setTimeout(()=>{
                     this.dbManualHealthCheck()
@@ -414,13 +416,13 @@ export default class printProcess {
             }
             // await this.processAndEnqueueData(this.db,this.lastSerId,this.serializationQueue1)
             await this.processAndEnqueueData(this.db,this.lastSerId,this.serializationQueue2)
-            console.log("BUF NUM : ",await this.printer.getBufNum())
+            printPLogger.info("Curent printer buffer number : ",await this.printer.getBufNum())
             this.printer.isOccupied = true;
             this.printer.localBufferCount= this.full_code_queue.size();
             this.sensor.setInstantCallback( ()=> {
                 // console.log(this, this.print3)
                 this.printer.aBoxIsPrintedCompletely=false;
-                this.print3();
+                this.print();
             })
             this.sensor.setFallingEdgeCallback(()=> {
                 this.printer.aBoxIsPrintedCompletely=true;
@@ -428,7 +430,7 @@ export default class printProcess {
             
             return "success"
         }catch(err){
-            console.log(err)
+            printPLogger.error("error on print setup", err)
             return err
         }
     }
@@ -476,18 +478,18 @@ export default class printProcess {
        
     }
    }
-    async print3(){
+    async print(){
         const release =  await mutex.acquire();
-        console.log("[Printing Process] an object is passing the printer sensor")
+        printPLogger.info("An object is passing the printer sensor")
         if (this.printer.isOccupied){
-            console.log("still occupied")
+            // console.log("still occupied")
             if(!this.completion){ 
-                console.log("still not completion")
+                // console.log("still not completion")
                 // console.log("queue1 :", this.serializationQueue1)
                 // console.log("queue2 :", this.serializationQueue2)
                 let refillFlag= false;
                 if(this.serializationQueue1.isEmpty()){
-                    console.log("SerQueue1 needs to be filled")
+                    printPLogger.info("SerQueue1 needs to be filled")
                     // console.time('Spread Operator');
                     // console.log("Queue 2 size ", this.serializationQueue2.size())
                     // console.log("queue2 before deq :",this.serializationQueue2)
@@ -497,7 +499,7 @@ export default class printProcess {
                             this.serializationQueue1.enqueue(this.serializationQueue2.dequeue())
                         }
                     }else{
-                        console.log("serQueue2 is empty too, means no data left in db")
+                        printPLogger.info("serQueue2 is empty too, means no data left in db")
                     }
                     
                     // console.log("queue2 after dqe :",this.serializationQueue2)
@@ -509,14 +511,14 @@ export default class printProcess {
                 // console.log("queue1 after copy :",this.serializationQueue1) // after coppying the 
                 if (this.serializationQueue1.isEmpty() && refillFlag===true) {
                     
-                    console.log("[Printing Process] entering completion phase, SerQueue1 is still empty after filled with serQueue2");
+                    printPLogger.info("Entering completion phase, SerQueue1 is still empty after filled with serQueue2");
                     this.completion=true;
                     
                     
 
                 } else {
                     let serialization=this.serializationQueue1.dequeue()
-                    console.log("[Printing Process] Data retrieved:", serialization);
+                    printPLogger.info("Data retrieved:", serialization);
                 
                     try {
                         let P_status = await this.printer.sendRemoteFieldData([`SN ${serialization.SN}`, serialization.full_code])
@@ -524,43 +526,44 @@ export default class printProcess {
                             if (!this.error_full_code_queue.isEmpty() && P_status==="now full"){
                                 const error_full_code = this.error_full_code_queue.dequeue()
                                 this.full_code_queue.enqueue(error_full_code)
-                                console.log("[Printing Process] error upon pushing data to buffer previously, but the previous code was entered to buffer")
+                                printPLogger.warn("Error upon pushing data to buffer previously, but the previous code was entered to buffer")
                             }else if(this.error_full_code_queue.size()===1 && P_status==="no errors"){
-                                console.log("[Printing Process] error upon pushing data to buffer previously, and the previous code was NOT entered to buffer")
+                                printPLogger.warn(" Error upon pushing data to buffer previously, and the previous code was NOT entered to buffer")
                                 this.error_full_code_queue.dequeue();
                             }else if(this.error_full_code_queue.size()>2 ){
                                 this.abort("consequtive error on pushing data to buffer")
+                                this.printPLogger.error("consequtive error on pushing data to buffer")
                                 
                             }
                             this.full_code_queue.enqueue(serialization.full_code)
                             const updateResult = await this.updateStatus(this.db, serialization.id);
                             if (updateResult.status === 'success') {
-                                console.log("Status updated successfully.");
+                                printPLogger.log("Status updated successfully.");
                             } else if (updateResult.status === 'not_found') {
-                                console.log("Document not found, no status update performed.");
-                                this.abort();
+                                printPLogger.error("Document not found, no status update performed.");
+                                this.abort("Document not found, no status update performed.");
                                 release();
                                 return false;
                             } else if (updateResult.status === 'max_retries_reached') {
-                                console.error("Failed to update status after maximum retries:", updateResult.error);
+                                printPLogger.error("Failed to update status after maximum retries:", updateResult.error);
                                 this.abort("Failed to update status after maximum retries:", updateResult.error);
                                 release();
                                 return false;
                             }
                         }
                     } catch (error) {
-                        console.log("[Printing Process] an error occured on pushing data to buffer", error)
+                        printPLogger.error("An error occured on pushing data to buffer", error)
                         this.error_full_code_queue.enqueue(serialization.full_code)
                         const updateResult = await this.updateStatus(this.db, serialization.id, "PENDING_VALIDATION");
                         if (updateResult.status === 'success') {
-                            console.log("Status updated successfully.");
+                            printPLogger.info("Status updated successfully.");
                         } else if (updateResult.status === 'not_found') {
-                            console.log("Document not found, no status update performed.");
+                            printPLogger.error("Document not found, no status update performed.");
                             this.abort("Document not found, no status update performed.");
                             release();
                             return false;
                         } else if (updateResult.status === 'max_retries_reached') {
-                            console.error("Failed to update status after maximum retries:", updateResult.error);
+                            printPLogger.error("Failed to update status after maximum retries:", updateResult.error);
                             this.abort("Failed to update status after maximum retries:", updateResult.error);
                             
                             release();
@@ -576,13 +579,13 @@ export default class printProcess {
                     try {
 
                         let buffNum=  await this.getPrinterBuffNumWithRetries(0)
-                        console.log("printer buffer :",  buffNum)
-                        console.log("local buffer :",  this.full_code_queue.size())
+                        printPLogger.info("printer buffer :",  buffNum)
+                        printPLogger.info("local buffer :",  this.full_code_queue.size())
 
                         if(this.full_code_queue.size()<=buffNum){
-                            console.log("[Printing Process] error upon pushing data to buffer previously, but the previous code was entered")
+                            printPLogger.warn("Error upon pushing data to buffer previously, but the previous code was entered")
                         }else{
-                            console.log("[Printing Process] error upon pushing data to buffer previously, and the previous code was NOT entered")
+                            printPLogger.warn("Error upon pushing data to buffer previously, and the previous code was NOT entered")
                         }
                     } catch (error) {
                         needToReInit.emit("pleaseReInit","Printing Process", error)
@@ -599,23 +602,23 @@ export default class printProcess {
                         // console.log("[printing process] waiting a box to be completely printed...")
                         await new Promise(resolve => setTimeout(resolve, 100)) // waiting for the last box to be completely printed
                     }
-                    console.log("printing is completed")
+                    printPLogger.info("printing is completed")
                     fs.open(pipePath, 'w', (err, fd) => {
                         if (err) {
-                          console.error('Failed to open named pipe:', err);
+                            printPLogger.error('Failed to open named pipe:', err);
                           return;
                         }
                       
                         fs.write(fd, 'off', (err) => {
                           if (err) {
-                            console.error('Failed to write to named pipe:', err);
+                            printPLogger.error('Failed to write to named pipe:', err);
                           } else {
-                            console.log('Message sent: off');
+                            printPLogger.info('Message sent to pipe: off');
                           }
                       
                           fs.close(fd, (err) => {
                             if (err) {
-                              console.error('Failed to close named pipe:', err);
+                                printPLogger.error('Failed to close named pipe:', err);
                             }
                           });
                         });
@@ -625,7 +628,7 @@ export default class printProcess {
                         full_code:printed,
                     }) 
                     this.printer.isOccupied=false
-                    console.log(`[Printing Process] printing process with assignment Id = ${this.assignment_id}, work order Id =${this.work_order_id} is completed! $`)
+                    printPLogger.info(`Printing process with assignment Id = ${this.assignment_id}, work order Id =${this.work_order_id} is completed! $`)
                     
                     this.printer.stopPrint();
                     await postDataToAPI('v1/work-order/active-job/complete-print',{})  
@@ -636,7 +639,7 @@ export default class printProcess {
                 }
                
             } catch (error) {
-                console.log("[Printing Process] error on update to API", error)
+                printPLogger.error("Error on update to API", error)
             }
             
         }

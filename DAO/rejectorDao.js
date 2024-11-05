@@ -20,7 +20,7 @@ export default class Rejection {
         // await sleep(this.rejectDelay);
         await sleep(50); // rizal delay 2
         this.switch1.setValue(1);
-        console.log("[Rejector] an object is rejected");
+        // console.log("[Rejector] an object is rejected");
         
         
     }
