@@ -16,20 +16,13 @@ import HealthChecks from './DAO/healthCheck.js';
 import Initialization from './init.js'
 import Button from './DAO/buttonDao.js';
 import LED from './DAO/ledDao.js';
-// import printerTemplate from './utils/printerTemplates.js';
-// import printerTemplate from './utils/printerTemplates.js';
+
+
 console.log("Starting middleware...")
 process.on('unhandledRejection', (err) => {
     console.error('Unhandled Promise Rejection:', err);
     // Handle the error gracefully or log it
 });
-
-
-// const masterConfig = new lowDB('../utils/master-config.json')
-// await masterConfig.init()
-// console.log(`masterConfigs: ${masterConfig.getAllConfig()}`)
-// const kafkaProdHC = new KafkaProducer("middleWare",process.env.KAFKA_BROKER_ENDPOINT)
-
 
 const masterConfig = new lowDB('../utils/master-config.json');
 
@@ -81,62 +74,26 @@ const AggCamWsStatus = new WebSocketClient(process.env.WS_IP, process.env.WS_POR
 
 
 const aggCam = new AggregationCam(AggCamWsData, AggCamWsStatus, yellowButton)// instancing aggregation cam class using wsAggregation instance
-// await AggCamWsData.connect()
-// await AggCamWsStatus.connect()
-// await aggCam.setCallBack();
-// await new Promise(resolve => setTimeout(resolve, 10000));
-// await aggCam.getStatus()
-// await new Promise(resolve => setTimeout(resolve, 200));
-// await aggCam.getStatus()
-// await new Promise(resolve => setTimeout(resolve, 200));
-// await aggCam.getStatus()
-// await new Promise(resolve => setTimeout(resolve, 5000));
-// await aggCam.getData()
-// await aggCam.getStatus()
+
 const printer = new TIJPrinter(process.env.TiJPrinter_IP, process.env.TiJPrinter_PORT,process.env.TiJPrinter_SLAVE_ADDRESS,"1")//instancing printer class 
-
-
-
-// await kafkaProdHC.connect();
-// const HC = new HealthChecks(printer, serialCamera,aggCam,kafkaProdHC)
-// HC.run()
 
 
 
 const init = new Initialization(mongoDB, AggCamWsData,AggCamWsStatus, aggCam, printer,serialCamera, rejector, yellowLed,greenLed,yellowButton,greenButton, healthChecksWs, printerSensor )
 console.log("Initializing...")
 await init.run();
-// printer.init=init;
-// aggCam.init=init;
-// serialCamera.init=init;
+
 console.log("Initialization is completed !")
 
 
 
-// await printer.connect();
-// const inks = await printer.requestInkRemains()
-// console.log(inks[0]);
 
 const printingProcess = new printProcess(printer, mongoDB, printerSensor) // instancing printing process class with printer and mongoDB instances as the constructor
 serialCamera.printProcess=printingProcess
 console.log(`test master : ${printingProcess.templateName}`)
-// await healthChecksWs.connect();
-// const healthChecks = new HealthChecks(printer, serialCamera,aggCam, healthChecksWs);
 
-
-// healthChecks.run()
 await new Promise(resolve => setTimeout(resolve, 1000));
 
-// console.log("simulate printing...");
-
-// const printingInterval = setInterval(()=>{
-//    printer.requestInkRemains();//ceritanya ngeprint
-// }, 5100)
-
-// setTimeout(()=>{
-//   console.log("printing simulation is finished");
-//   clearInterval(printingInterval)
-// },50000)
 export  {printingProcess,printer, serialCamera, rejector, masterConfig}  
 startHTTPServer(process.env.SERVER_PORT)
 

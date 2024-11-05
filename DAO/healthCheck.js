@@ -80,27 +80,7 @@ export default class HealthChecks{
           error_message
         };
       }
-      // async sendToKafka(peripheral) {
-      //   const status = await this.getStatus(peripheral);
-        
-      //   const payload = {
-      //     peripherals: peripheral,
-      //     status: status.status,
-      //     ip: status.ip,
-      //     template_id: status.template_id,
-      //     ink_level_percentage: status.ink_level_percentage,
-      //     timestamp: new Date().toISOString(),
-      //     message: status.message
-      //   };
-      //   console.log(payload)
-      //   const message = JSON.stringify(payload);
-    
-      //   try {
-      //     await this.kafkaProducer.sendMessage('health_checks', message);
-      //   } catch (error) {
-      //     console.error('[Health Checks] Error sending to Kafka:', error);
-      //   }
-      // }
+
 
       async sendToWS() {
         const printer = await this.getStatus("PRINTER");

@@ -2,8 +2,7 @@ import { postDataToAPI } from '../API/APICall/apiCall.js';
 import { SerialPort, ReadlineParser } from 'serialport';
 import { Mutex } from 'async-mutex';
 import { needToReInit } from '../utils/globalEventEmitter.js';
-// let readingLock = false;
-// let readingQueue = [];
+
 const mutex = new Mutex();
 let hcInterval = null;
 const hcIntervalTime = 33800;
@@ -15,24 +14,13 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// async function checkWeigher(tryCount) {
-//   try {
-//     await readWeight()
-//   } catch (error) {
-//     console.log(`[Weighiscale] retrying for ${tryCount} healthcheck`)
-//     if (tryCount >= 3) {
-//       throw error
-//     }
-//     await sleep(1000)
-//     await checkWeigher(tryCount+=1)
-//   }
-// }
+
 
 function setHCweightInterval() {
   hcInterval = setInterval(async () => {
     try {
       console.log("HC weigher")
-      // await checkWeigher(0)
+
       await readWeight()
     } catch (error) {
       if (errorOnReading) {
@@ -46,31 +34,7 @@ function setHCweightInterval() {
   }
     , normalProcessFlag ? hcIntervalTime + hcIntervalTolerance : hcIntervalTime)
 }
-// function _processQueue() {
-//   if (readingQueue.length > 0) {
-//     const { resolve, reject } = readingQueue.shift();
-//     readWeight().then(resolve).catch(reject);
-//   }
-// }
 
-// const readWeight = async () => {
-//   if (readingLock) {
-//     return new Promise((resolve, reject) => {
-//       readingQueue.push({ resolve, reject });
-//     });
-//   }
-
-//   readingLock = true;
-//   try {
-//     const weight = await _readWeight();
-//     return weight;
-//   } catch (error) {
-//     throw new Error('[Weighing Scale] error:', error);
-//   } finally {
-//     readingLock = false;
-//     _processQueue();
-//   }
-// }
 
 async function readWeight(retries = 5, delay = 1000) {
   for (let attempt = 1; attempt <= retries; attempt++) {
@@ -101,7 +65,7 @@ async function _readWeight() {
 
       ports.forEach(port => {
         if (port.vendorId === '067b' && port.productId === '23a3') {
-          // console.log('Found It');
+          // console.log('Found It'); // uncomment for debugging
           MYport = port.path;
         }
       });
@@ -123,7 +87,7 @@ async function _readWeight() {
             errorOnReading = true;
             reject('Error opening port: ' + err.message);
           }
-          // console.log('[Weiging Scale] Port opened');
+          // console.log('[Weiging Scale] Port opened'); // uncomment for debugging
         });
 
         let readings = [];
@@ -165,7 +129,7 @@ async function _readWeight() {
 
           if (readings.length >= maxReadings) {
             const average = readings.reduce((sum, value) => sum + value, 0) / readings.length;
-            // console.log('[Weighing Scale] Average weight:', average);
+            // console.log('[Weighing Scale] Average weight:', average); // uncomment for debugging
 
             port.close(err => {
               if (err) {
@@ -173,7 +137,7 @@ async function _readWeight() {
 
                 return reject(err);
               }
-              // console.log('[Weighing Scale] Port closed successfully');
+              // console.log('[Weighing Scale] Port closed successfully'); // uncomment for debugging
               resolve(average);
             });
           }
@@ -185,7 +149,7 @@ async function _readWeight() {
         });
 
         port.once('close', () => {
-          // console.log('Port closed');
+          // console.log('Port closed'); // uncomment for debugging
         });
 
       } else {

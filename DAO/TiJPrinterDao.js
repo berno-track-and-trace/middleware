@@ -11,11 +11,6 @@ import { rejector } from '../index.js';
 
 
 
-// // Example usage
-// pingIP('8.8.8.8')
-//   .then(response => console.log(response))
-//   .catch(error => console.error(error));
-
 
 const mutex = new Mutex();
 let sendFlag = false;
@@ -89,10 +84,6 @@ export default class TIJPrinter {
         this.printCallback = callback
     }
 
-    // setHealthCheckInterval(){
-    //     this.healthCheckInterval= setInterval(() => this.requestPrinterStatus(), sendFlag?this.hcTimekInterval+this.hcTimeTolerance:this.hcTimekInterval)
-    //     sendFlag=false;
-    // }
     setHealthCheckInterval() {
         this.healthCheckInterval = setInterval(() => {
             let rejectorCheck=false;
@@ -207,29 +198,6 @@ export default class TIJPrinter {
 
     }
 
-    //  _processQueue() {
-    //     if (this.sendingQueue.length > 0) {
-    //       const { data, commandName, resolve, reject } = this.printingQueue.shift();
-    //       this.send(data, commandName).then(resolve).catch(reject);
-    //     }
-    //   }
-    // async send(data, commandName=""){
-    //     if (this.sendingLock) {
-    //         return new Promise((resolve, reject) => {
-    //           this.sendingQueue.push({ data, commandName, resolve, reject });
-    //         });
-    //       }
-    //     this.sendingLock=true;
-    //     try {
-    //         const feedBack = await this._send(data, commandName);
-    //         return feedBack;
-    //       } catch (error) {
-    //         throw new Error(error);
-    //       } finally {
-    //         this.sendingLock = false;
-    //         this._processQueue();
-    //       }
-    // }
 
     async send(hexData, commandName) {
         const release = await mutex.acquire();

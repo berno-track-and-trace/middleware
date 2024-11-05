@@ -19,10 +19,7 @@ let normalProcessFlag=false;
 function setHCInterval(){
   hcInterval=setInterval(async ()=>{
     try {
-      // const response = await axios.get(url+"health-check")
-      // rizal change start
       const res = await axios.get(process.env.API_URL+"health-check")
-      // rizal change end
       if(res==null || res.status!=HttpStatusCode.Ok){
         throw new Error("Server is not ready")
       }
