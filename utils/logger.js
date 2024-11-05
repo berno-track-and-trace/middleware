@@ -6,9 +6,9 @@ const createLogger = (peripheral) => {
   const transports = [
     // Rotate log files daily, but all logs go to the same file
     new winston.transports.DailyRotateFile({
-      filename: path.join('logs', `combined-%DATE%.log`), // Log to a single file
+      filename: process.env.COMBINE_LOGS==='true'?path.join('logs', `combined-%DATE%.log`):path.join('logs', `${peripheral}-%DATE%.log`), // Log to a single file
       datePattern: 'YYYY-MM-DD',
-      maxFiles= '1d',
+      maxFiles: '1d',
       level: process.env.FILE_LOG_LEVEL || 'info', // Set log level for file
       format: winston.format.combine(
         winston.format.timestamp(),
@@ -47,8 +47,10 @@ const createLogger = (peripheral) => {
 //loggers for different peripherals
 export const printerLogger = createLogger('printer');
 export const serCamLogger = createLogger('serCam');
-export const printP = createLogger('printProcess');
-export const aggCam = createLogger('aggCam');
-export const init = createLogger('init')
-export const weighingScale = createLogger('weighingScale') 
-export const rejector = createLogger('rejector')
+export const printPLogger = createLogger('printProcess');
+export const aggCamLogger = createLogger('aggCam');
+export const initLogger = createLogger('init')
+export const weighingScaleLogger = createLogger('weighingScale') 
+export const rejectorLogger = createLogger('rejector')
+export const mongoDBLogger = createLogger('mongoDB')
+
