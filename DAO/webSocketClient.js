@@ -42,7 +42,7 @@ class WebSocketClient {
           });
     
           this.ws.once('close', () => {
-            console.log(`[${this.clientName}] disconnected`)
+            // console.log(`[${this.clientName}] disconnected`)
             this.status = 'disconnected';
             if(this.autoReInit){
               needToReInit.emit("pleaseReInit", this.clientName, "Disconnected")
@@ -52,7 +52,7 @@ class WebSocketClient {
         });
   
         this.ws.once('error', (error) => {
-          console.log(`[${this.clientName}] disconnected with error`, error)
+          // console.log(`[${this.clientName}] disconnected with error`, error)
           this.status = 'disconnected';
           
           reject(error);
@@ -68,17 +68,17 @@ class WebSocketClient {
     if (this.ws && this.status === 'connected') {
       this.ws.send(message);
     } else {
-      console.error('WebSocket is not connected.');
+      throw new Error('WebSocket is not connected.');
     }
   }
 
   receiveMessage(callback, name="") {
-    console.log("assining callback ws")
+    // console.log("assining callback ws")
     if (this.ws) {
       this.ws.on('message', callback);
-      console.log("callback ws assigned by ",name )
+      // console.log("callback ws assigned by ",name )
     } else {
-      console.error(`[${this.clientName}] WebSocket is not initialized.`);
+      throw new Error(`[${this.clientName}] WebSocket is not initialized.`);
     }
   }
 
@@ -89,7 +89,7 @@ class WebSocketClient {
       
       this.status = 'disconnected';
     } else {
-      console.error(`[${this.clientName}] WebSocket is not initialized.`);
+      throw new Error(`[${this.clientName}] WebSocket is not initialized.`);
     }
   }
 }
