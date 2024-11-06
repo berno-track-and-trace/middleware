@@ -1,13 +1,14 @@
 import net from 'net';
 import { EventEmitter } from 'events';
 import { error } from 'console';
-import createCustomLogger from '../utils/logging.js'
 import { Mutex } from 'async-mutex';
 
 import { needToReInit } from '../utils/globalEventEmitter.js';
 
 import { exec } from 'child_process';
 import { rejector } from '../index.js';
+
+import {printerLogger} from '../utils/logger.js'
 
 
 
@@ -46,7 +47,7 @@ export default class TIJPrinter {
         this.notReceiving = false;
 
         this.localBufferCount=0;
-        this.logger = createCustomLogger("PRINTER")
+
 
         this.hcTimekInterval = 5000;
         this.hcTimeTolerance = 500;
@@ -68,6 +69,7 @@ export default class TIJPrinter {
             exec(command, (error, stdout, stderr) => {
                 if (error) {
                     clearTimeout(timeout)
+                    
                     reject(`Ping failed: ${stderr}`);
                 } else if (stdout.includes('1 packets transmitted, 1 received')) {
                     clearTimeout(timeout)
@@ -88,23 +90,28 @@ export default class TIJPrinter {
         this.healthCheckInterval = setInterval(() => {
             let rejectorCheck=false;
             this.pingIP()
-                .then(response => console.log(response))
+                .then(response => printerLogger.info(`Ping health check : ${response}`))
                 .then(async () => {
                     if (this.isOccupied) {
-                        console.log("cek buf")
+                        try {
+                        printerLogger.info("Checking buffer healthcheck...")
                         const bufferCount= await this.getBufNum()
                         if (bufferCount<this.localBufferCount){
                             console.log("PB : ", bufferCount)
-                            console.log(" LB: ", thid.localBufferCount)
+                            console.log(" LB: ", this.localBufferCount)
+                            
                             rejectorCheck=true;
                             throw new Error("Middleware possibly can't get signal from printer sensor")
                         }
+                    }catch(error){
+                        throw new Error(error)
+                        }
                     }
                 }).catch(error => {
-                    needToReInit.emit("pleaseReInit", "Printer",error)
+                    needToReInit.emit("pleaseReInit", "Printer",error, rejectorCheck)
                     this.disconnect();
                     clearInterval(this.healthCheckInterval)
-                    console.log("[Printer] printer is not healthy : ", error,rejectorCheck)
+                    printerLogger.error("[Printer] printer is not healthy : ", error)
                 });
         }
             , sendFlag ? this.hcTimekInterval + this.hcTimeTolerance : this.hcTimekInterval)
