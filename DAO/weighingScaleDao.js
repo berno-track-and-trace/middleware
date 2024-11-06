@@ -2,6 +2,7 @@ import { postDataToAPI } from '../API/APICall/apiCall.js';
 import { SerialPort, ReadlineParser } from 'serialport';
 import { Mutex } from 'async-mutex';
 import { needToReInit } from '../utils/globalEventEmitter.js';
+import { weighingScaleLogger } from '../utils/logger.js';
 
 const mutex = new Mutex();
 let hcInterval = null;
@@ -19,14 +20,14 @@ function sleep(ms) {
 function setHCweightInterval() {
   hcInterval = setInterval(async () => {
     try {
-      console.log("HC weigher")
+      weighingScaleLogger.info("Normal health check on weigher")
 
-      await readWeight()
+      // await readWeight()
     } catch (error) {
-      if (errorOnReading) {
-        console.log("[Weighing Scale] the weighing scale is unhealthy", error);
-        needToReInit.emit("pleaseReInit", "weighingScale", error)
-      }
+      // if (errorOnReading) {
+      //   console.log("[Weighing Scale] the weighing scale is unhealthy", error);
+      //   needToReInit.emit("pleaseReInit", "weighingScale", error)
+      // }
     }
     errorOnReading = false;
     normalProcessFlag = false;
@@ -43,7 +44,7 @@ async function readWeight(retries = 5, delay = 1000) {
 
       return weight; // Successfully read weight
     } catch (error) {
-      console.log(`Attempt ${attempt} failed: ${error}`);
+      weighingScaleLogger.warn(`Attempt ${attempt} failed: ${error}`);
       if (attempt === retries) {
         // If the last retry fails, throw the error
         throw new Error(`All ${retries} attempts failed: ${error}`);
@@ -104,7 +105,7 @@ async function _readWeight() {
         parser.on('data', data => {
           clearTimeout(timeout);
           const weight = parseFloat(data.trim());
-          console.log('Data:', weight);
+          weighingScaleLogger.info('Data:', weight);
           errorOnReading = true;
 
           if (!isNaN(weight)) {
@@ -133,7 +134,7 @@ async function _readWeight() {
 
             port.close(err => {
               if (err) {
-                console.log('[Weighing Scale] Error closing port: ', err.message);
+                weighingScaleLogger.lerror('Error closing port: ', err.message);
 
                 return reject(err);
               }
@@ -144,7 +145,7 @@ async function _readWeight() {
         });
 
         port.once('error', err => {
-          console.log('Error: ', err.message);
+          weighingScaleLogger.error('Error: ', err.message);
           reject(err);
         });
 
@@ -159,7 +160,7 @@ async function _readWeight() {
       }
     } catch (err) {
       errorOnReading = true;
-      console.error('Error listing ports: ', err);
+      weighingScaleLogger.error('Error listing ports: ', err);
       reject(err);
     }
   }).finally(() => {
@@ -171,11 +172,11 @@ const readPrinterButton = (button) => {
   setHCweightInterval()
   button.setShortPressCallback(async () => {
     try {
-      console.log("[Label Printer] Label Printer button is pressed.");
+      weighingScaleLogger.info("Label Printer button is pressed.");
       await postDataToAPI('v1/work-order/active-job/trigger/weighing', {});
       await sleep(1000);
     } catch (err) {
-      console.log("[Label Printer] error on: ", err);
+      weighingScaleLogger.error("error on: ", err);
     }
   });
 }

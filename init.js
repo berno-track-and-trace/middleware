@@ -28,7 +28,7 @@ export default class Initialization {
     this.greenButton = greenButton,
     this.backEndWS = backEndWS,
     this.reRunning = false;
-    this.firstRun=true;
+    this.firstRun=false;
     this.state = {
       connectingToDB:false,
       connectingToWS:false,

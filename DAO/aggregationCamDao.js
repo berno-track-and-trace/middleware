@@ -66,7 +66,7 @@ class AggregationCam {
         }}
        catch (error) {
         needToReInit.emit("pleaseReInit", "aggCamWS", error)
-        aggCamLogger.error("Got error on normal healthcheck",error)
+        aggCamLogger.error(`Got error on normal healthcheck : ${error}`)
         clearInterval(this.hcInterval)
         this.normalOperationFlag=false;
       }

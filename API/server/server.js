@@ -1,5 +1,6 @@
 import express from 'express';
 import routesv1 from './masterRoutes.js';
+import { apiServerLogger } from '../../utils/logger.js';
 
 
 const app = express();
@@ -14,7 +15,7 @@ routesv1(app);
 // Start the server
  function startHTTPServer(port) {
   app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+    apiServerLogger.info(`Server is running on port ${port}`);
   });
 }
 export {app, startHTTPServer};

@@ -3,6 +3,7 @@ import  {printingProcess, printer,serialCamera, rejector} from '../../../../inde
 import printerTemplate from '../../../../utils/printerTemplates.js';
 import fs from 'fs';
 import { problematicPeripheral } from '../../../../init.js';
+import { apiCallLogger } from '../../../../utils/logger.js';
 // import serCam from '../../../../DAO/serCamDao.js';
 // const pipePath = '/tmp/middleware-failsafe-pipe'
 
@@ -28,7 +29,7 @@ const getPriterStatus = async (req, res) =>{
             nozzle_list
         })
     } catch (error) {
-        console.log(error)
+        apiCallLogger.error(error)
         res.status(500).send(error)
     }
 }

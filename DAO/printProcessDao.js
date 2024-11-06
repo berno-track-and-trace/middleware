@@ -221,7 +221,7 @@ export default class printProcess {
         let attempts = 0;
         const maxRetries = 1;
         const retryDelay = 1000;
-        printPLogger.info("fetching data after id : ", startingId)
+        printPLogger.info(`fetching data after id : ${startingId}`)
         while (attempts < maxRetries) {
             try {
                 if (this.mongoDB.healthCheckInterval) {
@@ -275,7 +275,7 @@ export default class printProcess {
                     break;
                 }
             } catch (error) {
-                printPLogger.warn(`[Fetch Data] Attempt ${attempts + 1} failed:`, error);
+                printPLogger.warn(`[Fetch Data] Attempt ${attempts + 1} failed: ${ error}`);
                 attempts++;
         
                 if (attempts >= maxRetries) {
@@ -372,7 +372,7 @@ export default class printProcess {
             await new Promise(resolve => setTimeout(resolve, 1000));
 
             const msg =printerTemplate[this.templateName](this.details,"QR003") 
-            printPLogger.info("using template name : ", this.templateName)
+            printPLogger.info(`using template name : ${this.templateName}`)
             
             await this.printer.send(msg)
             await new Promise(resolve => setTimeout(resolve, 1000));
@@ -393,7 +393,7 @@ export default class printProcess {
             while (serialization.status === undefined && (P_status === "no errors" || P_status=== "still full")){ // filling up the buffer first
                 const messages = [`SN ${serialization.SN}`, serialization.full_code]
                 P_status = await this.printer.sendRemoteFieldData(messages) // goes to printer buffer
-                printPLogger.info("sent messages", messages)
+                printPLogger.info(`Sent SN to printer buffer : ${serialization.SN}}`)
                 this.expectedBufferCount++;
                 let updateTimeOut = setTimeout(()=>{
                     this.dbManualHealthCheck()
@@ -416,7 +416,8 @@ export default class printProcess {
             }
             // await this.processAndEnqueueData(this.db,this.lastSerId,this.serializationQueue1)
             await this.processAndEnqueueData(this.db,this.lastSerId,this.serializationQueue2)
-            printPLogger.info("Curent printer buffer number : ",await this.printer.getBufNum())
+            const BN = await this.printer.getBufNum()
+            printPLogger.info(`Curent printer buffer number : ${BN}`)
             this.printer.isOccupied = true;
             this.printer.localBufferCount= this.full_code_queue.size();
             this.sensor.setInstantCallback( ()=> {
@@ -430,7 +431,7 @@ export default class printProcess {
             
             return "success"
         }catch(err){
-            printPLogger.error("error on print setup", err)
+            printPLogger.error(`error on print setup : ${err}`)
             return err
         }
     }
@@ -518,7 +519,7 @@ export default class printProcess {
 
                 } else {
                     let serialization=this.serializationQueue1.dequeue()
-                    printPLogger.info("Data retrieved:", serialization);
+                    printPLogger.info(`Data retrieved: ${serialization.SN}`);
                 
                     try {
                         let P_status = await this.printer.sendRemoteFieldData([`SN ${serialization.SN}`, serialization.full_code])
@@ -545,14 +546,14 @@ export default class printProcess {
                                 release();
                                 return false;
                             } else if (updateResult.status === 'max_retries_reached') {
-                                printPLogger.error("Failed to update status after maximum retries:", updateResult.error);
+                                printPLogger.error(`Failed to update status after maximum retries: ${updateResult.error}`);
                                 this.abort("Failed to update status after maximum retries:", updateResult.error);
                                 release();
                                 return false;
                             }
                         }
                     } catch (error) {
-                        printPLogger.error("An error occured on pushing data to buffer", error)
+                        printPLogger.error(`An error occured on pushing data to buffer : ${error}`)
                         this.error_full_code_queue.enqueue(serialization.full_code)
                         const updateResult = await this.updateStatus(this.db, serialization.id, "PENDING_VALIDATION");
                         if (updateResult.status === 'success') {
@@ -563,7 +564,7 @@ export default class printProcess {
                             release();
                             return false;
                         } else if (updateResult.status === 'max_retries_reached') {
-                            printPLogger.error("Failed to update status after maximum retries:", updateResult.error);
+                            printPLogger.error(`Failed to update status after maximum retries: ${updateResult.error}`);
                             this.abort("Failed to update status after maximum retries:", updateResult.error);
                             
                             release();
@@ -579,8 +580,8 @@ export default class printProcess {
                     try {
 
                         let buffNum=  await this.getPrinterBuffNumWithRetries(0)
-                        printPLogger.info("printer buffer :",  buffNum)
-                        printPLogger.info("local buffer :",  this.full_code_queue.size())
+                        printPLogger.info(`printer buffer : ${buffNum}`)
+                        printPLogger.info(`local buffer : ${this.full_code_queue.size()}`)
 
                         if(this.full_code_queue.size()<=buffNum){
                             printPLogger.warn("Error upon pushing data to buffer previously, but the previous code was entered")
@@ -639,7 +640,7 @@ export default class printProcess {
                 }
                
             } catch (error) {
-                printPLogger.error("Error on update to API", error)
+                printPLogger.error(`Error on update to API : ${error}`)
             }
             
         }

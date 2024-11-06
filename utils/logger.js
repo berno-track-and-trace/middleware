@@ -4,42 +4,42 @@ import 'winston-daily-rotate-file';
 
 const createLogger = (peripheral) => {
   const transports = [
-    // Rotate log files daily, but all logs go to the same file
     new winston.transports.DailyRotateFile({
-      filename: process.env.COMBINE_LOGS==='true'?path.join('logs', `combined-%DATE%.log`):path.join('logs', `${peripheral}-%DATE%.log`), // Log to a single file
+      filename: process.env.COMBINE_LOGS === 'true' ? path.join('logs', `combined-%DATE%.log`) : path.join('logs', `${peripheral}-%DATE%.log`),
       datePattern: 'YYYY-MM-DD',
       maxFiles: '1d',
-      level: process.env.FILE_LOG_LEVEL || 'info', // Set log level for file
+      level: process.env.FILE_LOG_LEVEL || 'info',
       format: winston.format.combine(
         winston.format.timestamp(),
-        // Custom format to place peripheral at the front
         winston.format.printf(({ level, message, timestamp }) => {
+          // Check if message is an object, and stringify it if so
+          const logMessage = typeof message === 'object' ? JSON.stringify(message) : message;
           return JSON.stringify({
             peripheral,
             timestamp,
             level,
-            message
+            message: logMessage,
           });
         })
       ),
     }),
   ];
 
-  // Optionally log to console with a different log level
   if (process.env.LOG_TO_CONSOLE === 'true') {
     transports.push(new winston.transports.Console({
-      level: process.env.CONSOLE_LOG_LEVEL || 'error', // Set log level for console
+      level: process.env.CONSOLE_LOG_LEVEL || 'error',
       format: winston.format.combine(
         winston.format.colorize(),
         winston.format.printf(({ level, message, timestamp }) => {
-          return `[${timestamp}] ${level}: [${peripheral}] ${message}`;
+          const logMessage = typeof message === 'object' ? JSON.stringify(message) : message;
+          return `[${timestamp}] ${level}: [${peripheral}] ${logMessage}`;
         })
       ),
     }));
   }
 
   return winston.createLogger({
-    level: process.env.LOG_LEVEL || 'info', // Set default log level
+    level: process.env.LOG_LEVEL || 'info',
     transports,
   });
 };
@@ -54,4 +54,5 @@ export const weighingScaleLogger = createLogger('weighingScale')
 export const rejectorLogger = createLogger('rejector')
 export const mongoDBLogger = createLogger('mongoDB')
 export const beWsLogger = createLogger('backEndWebSocket')
-
+export const apiCallLogger = createLogger('APICall')
+export const apiServerLogger = createLogger('apiServer')

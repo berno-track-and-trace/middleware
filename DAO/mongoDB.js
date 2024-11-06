@@ -40,7 +40,7 @@ export default class MongoDB {
             
         } catch (error) {//TODO: add clearTimeout(timeout);
             needToReInit.emit("pleaseReInit", "MongoDB")
-            mongoDBLogger.error(" health check error : ", error)
+            mongoDBLogger.error(`health check error : ${error}`)
             this.normalOperationFlag=false;
         }
 
@@ -55,7 +55,7 @@ export default class MongoDB {
             this.isConnected = true;
             this.setHealthCheck()
         } catch (err) {
-            mongoDBLogger.error('Error connecting to the MongoDB, error:', err);
+            mongoDBLogger.error(`Error connecting to the MongoDB, error: ${err}`);
             this.isConnected = false;
             throw err;
         }
@@ -67,7 +67,7 @@ export default class MongoDB {
             mongoDBLogger.info('Connection to the database closed');
             this.isConnected = false;
         } catch (err) {
-            mongoDBLogger.error('Error closing the database connection:', err);
+            mongoDBLogger.error(`Error closing the database connection: ${err}`);
         }
     }
 
@@ -82,7 +82,7 @@ export default class MongoDB {
                     break;
                 }
             } catch (err) {
-                mongoDBLogger.error('Reconnection attempt failed, error:', err);
+                mongoDBLogger.error(`Reconnection attempt failed, error: ${err}`);
                 await new Promise(resolve => setTimeout(resolve, this.reconnectInterval));
             }
             tries++;

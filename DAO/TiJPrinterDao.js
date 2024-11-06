@@ -112,7 +112,7 @@ export default class TIJPrinter {
                     needToReInit.emit("pleaseReInit", "Printer",error, rejectorCheck)
                     this.disconnect();
                     clearInterval(this.healthCheckInterval)
-                    printerLogger.error("[Printer] printer is not healthy : ", error)
+                    printerLogger.error(`[Printer] printer is not healthy : ${error}` )
                 });
         }
             , sendFlag ? this.hcTimekInterval + this.hcTimeTolerance : this.hcTimekInterval)
@@ -141,7 +141,7 @@ export default class TIJPrinter {
                 });
 
                 this.socket.once('error', (err) => {
-                    printerLogger.error("Error listening for responses:", err);
+                    printerLogger.error(`Error listening for responses: ${err}`);
                     
                     this.running = false;
                     // this.init?.reRun()
@@ -149,7 +149,7 @@ export default class TIJPrinter {
                 });
 
                 this.socket.once('close', (err) => {
-                    printerLogger.error("Error listening for responses:", err);
+                    printerLogger.error(`Error listening for responses: ${err}`);
                     this.running = false;
                     // this.init?.reRun()
                     rej(new Error(`Printer Connection error: ${err}`))
@@ -177,7 +177,7 @@ export default class TIJPrinter {
         });
 
         this.socket.on('error', (err) => {
-            printerLogger.error("Error listening for responses:", err);
+            printerLogger.error(`Error listening for responses: ${err}`);
             clearInterval(this.healthCheckInterval)
             this.running = false;
             needToReInit.emit("pleaseReInit", "Printer",err)
@@ -418,7 +418,7 @@ export default class TIJPrinter {
             }
         } catch (error) {
             // console.log(err);
-            throw new Error(`[Printer] Download Remote Field Data error: ${error}, the message was :`, messages);
+            throw new Error(`[Printer] Download Remote Field Data error: ${error}, the message was : ${messages}`);
         }
     }
 

@@ -75,11 +75,11 @@ class WebSocketClient {
   receiveMessage(callback, name="") {
     // console.log("assining callback ws")
     if (this.ws) {
-      this.ws.on('message', callback);
+      this.ws.on('message', callback);}
       // console.log("callback ws assigned by ",name )
-    } else {
-      throw new Error(`[${this.clientName}] WebSocket is not initialized.`);
-    }
+    // } else {
+    //   throw new Error(`[${this.clientName}] WebSocket is not initialized.`);
+    // }
   }
 
   disconnect() {
@@ -89,7 +89,7 @@ class WebSocketClient {
       
       this.status = 'disconnected';
     } else {
-      throw new Error(`[${this.clientName}] WebSocket is not initialized.`);
+      // throw new Error(`[${this.clientName}] WebSocket is not initialized.`);
     }
   }
 }

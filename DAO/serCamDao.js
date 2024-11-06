@@ -160,7 +160,7 @@ export default class serCam {
 
                 }
             } catch (error) {   
-                serCamLogger.error("Healthcheck error : ", error)
+                serCamLogger.error(`Healthcheck error : ${err}`)
             }
             
         }, normalOperationFlag?this.hcTimeInterval+this.hcTimeTolerance:this.hcTimeInterval)
@@ -251,7 +251,7 @@ export default class serCam {
                         // console.log("[Ser Cam] Status is ok")
                     }else{
 
-                        serCamLogger.error("[Ser Cam] Camera error code found : ", responseString[2])
+                        serCamLogger.error(`[Ser Cam] Camera error code found : ${responseString[2]}`)
                         needToReInit.emit("pleaseReInit", "serCam", "Camera error code found");
                     }
                 }
@@ -272,7 +272,7 @@ export default class serCam {
         this.socket.on('error', (err) => {
             clearInterval(this.healthCheckInterval);
             needToReInit.emit("pleaseReInit", "serCam", "Error listening for responses");
-            serCamLogger.error("Error listening for responses:", err);
+            serCamLogger.error(`Error listening for responses: ${err}`);
         });
 
         this.socket.on('close', () => {
@@ -312,7 +312,7 @@ export default class serCam {
             result = false;
             
         }
-        serCamLogger({
+        serCamLogger.info({
             'result':result,
             'reason':reason,
             'code' : code

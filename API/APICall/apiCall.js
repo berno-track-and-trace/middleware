@@ -5,6 +5,7 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 import { needToReInit } from '../../utils/globalEventEmitter.js';
+import { apiCallLogger } from '../../utils/logger.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const envPath = resolve(__dirname, '../../.env');
@@ -23,13 +24,13 @@ function setHCInterval(){
       if(res==null || res.status!=HttpStatusCode.Ok){
         throw new Error("Server is not ready")
       }
-      console.log("[API Call] BE server is healthy")
+      apiCallLogger.info("Normal Healthcheck : BE server is healthy")
 
       
     } catch (error) {
 
-        console.log("[API Call] the server is unhealthy : ",error);
-        needToReInit.emit("pleaseReInit", "HTTP Server")
+        apiCallLogger.error(`Normal Healthcheck:  the server is unhealthy : ${error}`);
+        needToReInit.emit("pleaseReInit", "HTTP Server", error)
       
     }
     
@@ -50,11 +51,18 @@ function setHCInterval(){
   })
     normalProcessFlag=true;
     setHCInterval();
-    console.log('[API Call] Req POST Body : ', data)
-    console.log(`[API Call] Req ID : ${response.headers['x-request-id']}, POST response:`, response.data);
+    apiCallLogger.info(`[API Call] Req POST Body : ${data}`)
+
+    apiCallLogger.info({
+      'method':"POST",
+      'body':data,
+      'ReqID':response.headers['x-request-id'],
+      'response':response.data
+    })
+
     
   } catch (error) {
-    console.error(`[API Call] Error on POST data to API : `, error.message);
+    apiCallLogger.error(`Error on POST data to API : ${error.message}`);
    
   }
 }
@@ -70,14 +78,20 @@ export async function putDataToAPI(route, data) {
   })
     normalProcessFlag=true;
     setHCInterval();
-    console.log('[API Call] Req PUT Body : ', data)
-    console.log(`[API Call] Req ID : ${response}, PUT response:`, response.data);
+    apiCallLogger.info({
+      'method':"PUT",
+      'body':data,
+      'ReqID':response.headers['x-request-id'],
+      'response':response.data
+    })
+    // console.log('[API Call] Req PUT Body : ', data)
+    // console.log(`[API Call] Req ID : ${response}, PUT response:`, response.data);
   } catch (error) {
-    console.error(`[API Call] Error on PUT data to API : `, error.message);
+    apiCallLogger.error(`[API Call] Error on PUT data to API : ${ error.message}`);
     
   }
 }
-export async function getDataToAPI(route, data) {
+export async function getDataToAPI(route, data=null) {
   const url = process.env.API_URL+route
   console.log("Get req to : ",url)
   
@@ -86,10 +100,22 @@ export async function getDataToAPI(route, data) {
     const response = await axios.get(url)
     normalProcessFlag=true;
     setHCInterval();
+    const jsonRes = {
+      'method':"GET",
+      // 'body':data,
+      // 'ReqID':response.headers['x-request-id'],
+      // 'response':response
+    }
+    console.log(jsonRes)
+
+    const msg = JSON.stringify(jsonRes)
+    console.log(msg)
+    apiCallLogger.info(jsonRes)
+
     return  response
 
   } catch (error) {
-    console.error(`[API Call] Error on GET data to API : `, error.message);
+    apiCallLogger.error(`[API Call] Error on GET data to API : ${error.message}`);
     
     return null;
     

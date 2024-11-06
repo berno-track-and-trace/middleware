@@ -3,6 +3,7 @@ import  {printingProcess, printer,serialCamera, rejector} from '../../../../inde
 import printerTemplate from '../../../../utils/printerTemplates.js';
 import fs from 'fs';
 import { problematicPeripheral } from '../../../../init.js';
+import { apiServerLogger } from '../../../../utils/logger.js';
 // import serCam from '../../../../DAO/serCamDao.js';
 const pipePath = '/tmp/middleware-failsafe-pipe'
 
@@ -11,33 +12,35 @@ const pipePath = '/tmp/middleware-failsafe-pipe'
 const stopPrinting = async (req, res) => {
    
     try {
+        apiServerLogger.info("Stop printing is called")
         fs.open(pipePath, 'w', (err, fd) => {
             if (err) {
-              console.error('Failed to open named pipe:', err);
+              apiServerLogger.error('Failed to open named pipe:', err);
               return;
             }
           
             fs.write(fd, 'off', (err) => {
               if (err) {
-                console.error('Failed to write to named pipe:', err);
+                apiServerLogger.error('Failed to write to named pipe:', err);
               } else {
-                console.log('Message sent: off');
+                apiServerLogger.info('Message sent: off');
               }
           
               fs.close(fd, (err) => {
                 if (err) {
-                  console.error('Failed to close named pipe:', err);
+                  apiServerLogger.error('Failed to close named pipe:', err);
                 }
               });
             });
           });
         // printingProcess.full_code_queue.clear();
         await printer.send(12)
-        console.log("printer is successfully stopped by the BE")
+        apiServerLogger.info("printer is successfully stopped by the BE")
         printer.isOccupied=false;
         res.status(200).send({message:"printer is successfully stopped"})
     } catch (err) {
         res.status(500).send({error:err})
+        apiServerLogger.error(err)
     }
 
     // await printer.send(21)
@@ -46,14 +49,14 @@ const stopPrinting = async (req, res) => {
 
 const toggleToNotReceive = async (req, res) =>{
     printer.notReceiving=!printer.notReceiving
-    console.log("not receiving set to be ", printer.notReceiving)
+    apiServerLogger.info("not receiving set to be ", printer.notReceiving)
     res.status(200).send({simulating:printer.notReceiving})
 }
 
 const startPrinting = async (req, res) => {
     let missingBody=""
-    console.log("start printing called by BE")
-    console.log("per :" , problematicPeripheral)
+    apiServerLogger.info("start printing called by BE")
+    // apiServerLogger.info("per :" , problematicPeripheral)
     
     try {
       if (problematicPeripheral){
@@ -86,28 +89,28 @@ const startPrinting = async (req, res) => {
       }
   
       if (printer.running===false){
-          console.log("[startPrinting API] Cannot connect to the printer")
+          apiServerLogger.error("[startPrinting API] Cannot connect to the printer")
           return res.status(500).send({message: "Cannot connect to the printer" })
       }
         if (await printingProcess.printSetupChecks()==="success"){
             // printingProcess.print().then(() =>{})
-            console.log("success")
+            apiServerLogger.info(" print setup checks are succeed")
             fs.open(pipePath, 'w', (err, fd) => {
                 if (err) {
-                  console.error('Failed to open named pipe:', err);
+                  apiServerLogger.error('Failed to open named pipe:', err);
                   return;
                 }
               
                 fs.write(fd, 'on', (err) => {
                   if (err) {
-                    console.error('Failed to write to named pipe:', err);
+                    apiServerLogger.error('Failed to write to named pipe:', err);
                   } else {
-                    console.log('Message sent: on');
+                    apiServerLogger.info('Message sent to pipe: on');
                   }
               
                   fs.close(fd, (err) => {
                     if (err) {
-                      console.error('Failed to close named pipe:', err);
+                      apiServerLogger.error('Failed to close named pipe:', err);
                     }
                   });
                 });
@@ -121,7 +124,7 @@ const startPrinting = async (req, res) => {
             return res.status(500).send({message:"unknown issue, printer is not started"})
         }
     }catch(err){
-        console.log(err)
+        apiServerLogger.error(err)
         res.status(500).send({error:err})
     }
     
