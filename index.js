@@ -54,7 +54,7 @@ const greenButton = new Button(process.env.LABEL_PRINTER_INPUT_PIN)
 const yellowLed = new LED(process.env.AGGREGARTE_BUTTON_LIGHT_OUTPUT_PIN)
 const greenLed = new LED(process.env.LABEL_PRINTER_BUTTON_LIGHT_OUTPUT_PIN)
 
-const printerSensor = new Button(17)
+const printerSensor = new Button(17,0)
 // const serCamSensor = new Button(5,0)
 
 

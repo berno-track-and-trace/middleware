@@ -6,7 +6,7 @@ import { Mutex } from 'async-mutex';
 import { needToReInit } from '../utils/globalEventEmitter.js';
 
 import { exec } from 'child_process';
-import { rejector } from '../index.js';
+import { printer, rejector } from '../index.js';
 
 import {printerLogger} from '../utils/logger.js'
 
@@ -97,9 +97,10 @@ export default class TIJPrinter {
                         printerLogger.info("Checking buffer healthcheck...")
                         const bufferCount= await this.getBufNum()
                         if (bufferCount<this.localBufferCount){
-                            console.log("PB : ", bufferCount)
-                            console.log(" LB: ", this.localBufferCount)
-                            
+                            printerLogger.warn({
+                                'printerBufferCount':bufferCount,
+                                'localBufferCount':this.localBufferCount
+                            })
                             rejectorCheck=true;
                             throw new Error("Middleware possibly can't get signal from printer sensor")
                         }
@@ -134,26 +135,24 @@ export default class TIJPrinter {
                     this.socket.removeAllListeners();
                     this.listenerThread = this.listenForResponses();
                     this.setHealthCheckInterval();
-                    console.log(`[Printer] Socket established on port ${this.port} and IP ${this.ip}`);
-                    this.logger.info(`Socket established on port ${this.port} and IP ${this.ip}`);
+                    printerLogger.info(`Socket established on port ${this.port} and IP ${this.ip}`);
                     res();
 
                 });
 
                 this.socket.once('error', (err) => {
-                    console.error("[Printer] Error listening for responses:", err);
-                    this.logger.error("Error listening for responses:", err);
+                    printerLogger.error("Error listening for responses:", err);
+                    
                     this.running = false;
                     // this.init?.reRun()
-                    rej(new Error(`[Printer] Connection error: ${err}`))
+                    rej(new Error(`Printer Connection error: ${err}`))
                 });
 
                 this.socket.once('close', (err) => {
-                    console.log("[Printer] Listening stopped");
-                    this.logger.error("Error listening for responses:", err);
+                    printerLogger.error("Error listening for responses:", err);
                     this.running = false;
                     // this.init?.reRun()
-                    rej(new Error(`[Printer] Connection error: ${err}`))
+                    rej(new Error(`Printer Connection error: ${err}`))
                 });
 
             } catch (error) {
@@ -178,19 +177,17 @@ export default class TIJPrinter {
         });
 
         this.socket.on('error', (err) => {
-            console.error("[Printer] Error listening for responses:", err);
+            printerLogger.error("Error listening for responses:", err);
             clearInterval(this.healthCheckInterval)
             this.running = false;
-            // this.init?.reRun();
-            needToReInit.emit("pleaseReInit", "Printer")
+            needToReInit.emit("pleaseReInit", "Printer",err)
         });
 
         this.socket.on('close', () => {
-            console.log("[Printer] Listening stopped");
+            printerLogger.info("Listening stopped");
             clearInterval(this.healthCheckInterval)
-            needToReInit.emit("pleaseReInit", "Printer")
+            needToReInit.emit("pleaseReInit", "Printer", 'socket is closed')
             this.running = false;
-            // this.init?.reRun();
         });
     }
 
@@ -233,11 +230,10 @@ export default class TIJPrinter {
                 sendFlag = true;
                 this.setHealthCheckInterval();
                 if (this.noResponseCount >= 3 && this.running === true) {
-                    console.log("[Printer] too many no responses")
+                    printerLogger.error("Too many times has no responses from printer")
                     this.running = false;
-                    // this.init?.reRun();
                     clearInterval(this.healthCheckInterval)
-                    needToReInit.emit("pleaseReInit", "Printer")
+                    needToReInit.emit("pleaseReInit", "Printer", "Too many times has no responses from printer")
                     this.noResponseCount = 0;
                 }
 
@@ -265,12 +261,11 @@ export default class TIJPrinter {
     disconnect() {
         this.running = false;
         this.socket.destroy();
-        console.log("[Printer] Printer is Disconnected");
+        printerLogger.info("Printer is successfuly disconnected");
     }
 
     isSolicitedResponse(response) {
         const unsolicitedPosition = 3;
-        // if (response.toString('utf8') === "PRI"){
 
         if (response.slice(unsolicitedPosition, unsolicitedPosition + 2).equals(Buffer.from([0x00, 0xaa]))) {
             return false;
@@ -366,10 +361,10 @@ export default class TIJPrinter {
             id = id.toString(16).padStart(2, '0')
             textLenght = textLenght.toString(16).padStart(2, '0')
             const data = `03${x}${y}${rotation}${space}${fontSize}${fontLen}${fontName}${80}${id}${textLenght}`;
-            console.log(`data field : ${data}`)
+            printerLogger.info(`Data field module created: ${data}`)
             return data
         } catch (err) {
-            console.log(`[Printer] Create Module Field error: ${err}`)
+            printerLogger.error(`Create Module Field error: ${err}`)
             throw new Error
         }
     }
@@ -502,7 +497,7 @@ export default class TIJPrinter {
         await this.send("21", "Clear Buffers of 1D(21)")
             .then(responseBuffer => {
                 if (responseBuffer[1] === 0x06) {
-                    console.log("[Printer] Buffers cleared")
+                    printerLogger.info("[Printer] Buffers cleared")
                     return true
                 } else {
                     throw new Error("got NACK")
@@ -518,12 +513,16 @@ export default class TIJPrinter {
                 if (responseBuffer[1] === 0x06) {
                     switch (responseBuffer[3]) { // P_status
                         case 0x00:
-                            console.log("[Printer] Print started successfully.")
+                            printerLogger.info("[Printer] Print started successfully.")
                             return true;
                         case 0x01:
                             throw new Error("One or more printer errors exist.")
-                        case 0x02:
-                            console.log("[Printer] Print not idle. The print has been started already.")
+                        case 0x11:
+                            printerLogger.info("[Printer] Print not idle. The print has been started already.")
+                            return true;
+                            
+                        case 0x13:
+                            printerLogger.warn("[Printer] The editing area's message is being edited when going to start print in grouping.")
                             break;
                         default:
                             throw new Error("unknown P_Status");
@@ -544,10 +543,10 @@ export default class TIJPrinter {
                 if (responseBuffer[1] === 0x06) {
                     switch (responseBuffer[3]) { // P_status
                         case 0x00:
-                            console.log("[Printer] Print stopped successfully.")
+                            printerLogger.info("[Printer] Print stopped successfully.")
                             return true;
                         case 0x12:
-                            console.log("[Printer] Print not started. The print has been stopped.")
+                            printerLogger.info("[Printer] Print not started. The print has been stopped.")
                             return true;
                         default:
                             throw new Error("unknown P_Status : ", responseBuffer[3]);

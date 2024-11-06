@@ -53,4 +53,5 @@ export const initLogger = createLogger('init')
 export const weighingScaleLogger = createLogger('weighingScale') 
 export const rejectorLogger = createLogger('rejector')
 export const mongoDBLogger = createLogger('mongoDB')
+export const beWsLogger = createLogger('backEndWebSocket')
 

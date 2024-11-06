@@ -6,6 +6,8 @@ import {Mutex} from 'async-mutex'
 import { needToReInit } from "./utils/globalEventEmitter.js";
 import * as child from 'node:child_process'
 import crypto from "crypto"
+import { initLogger, beWsLogger } from "./utils/logger.js";
+// import initializeRoutes from "./API/server/masterRoutes.js";
 
 let wsAndAggTimeOut = null
 const mutex = new Mutex();
@@ -41,7 +43,7 @@ export default class Initialization {
   }
   async reRun(peripheral,reason="no reason", rejectorCheck=false) {
     // const release = await mutex.acquire();
-    console.log(`[Init] ${peripheral} is commiting a re-initialization. Reason`, reason)
+    initLogger.info(`${peripheral} is commiting a re-initialization. Reason`, reason)
     problematicPeripheral =peripheral;
     try {
 
@@ -52,9 +54,12 @@ export default class Initialization {
       }
       const str = JSON.stringify(json)
       this.backEndWS.sendMessage(str)
-      console.log(str)
+      initLogger.info({
+        'info': "A problem was raised to backend",
+        'data':json
+      })
     }catch(error){
-      console.log("[Init ] error on sending report to backend WS : ", error)
+      initLogger.error("Error on sending report to backend WS : ", error)
     }
    
     try {
@@ -85,20 +90,20 @@ export default class Initialization {
     }
     fs.open(pipePath, 'w', (err, fd) => {
       if (err) {
-        console.error('Failed to open named pipe:', err);
+        initLogger.error('Failed to open named pipe:', err);
         return;
       }
     
       fs.write(fd, 'off', (err) => {
         if (err) {
-          console.error('Failed to write to named pipe:', err);
+          initLogger.error('Failed to write to named pipe:', err);
         } else {
-          console.log('Message sent: off');
+          initLogger.info('Message sent to pipe: off');
         }
     
         fs.close(fd, (err) => {
           if (err) {
-            console.error('Failed to close named pipe:', err);
+            initLogger.error('Failed to close named pipe:', err);
           }
         });
       });
@@ -115,7 +120,7 @@ export default class Initialization {
     try {
       await this.printer.stopPrint()
     } catch (error) {
-      console.log("[Init] error on stopping printer", error)
+      initLogger.error("Error on stopping printer", error)
     }
     while (!end){
       // await sleep(5)
@@ -148,21 +153,21 @@ export default class Initialization {
         }catch(err){
           this.yellowLed.setState('blinkFast')
           this.greenLed.setState('blinkFast')
-          console.log('[Init] error occurred: ',err)
+          initLogger.error('Error occurred: ',err)
           retryDelay=10;
         }
 
       }else if(this.state.connectingToWS){
         try{
           if (this.aggCamWsData.status==='disconnected'){
-            console.log("[Init] connecting to Websocket For data...")
+            initLogger.info("Connecting to Websocket For data...")
             await this.aggCamWsData.connect()
-            console.log("[Init] connected to Websocket for data.")
+            initLogger.info("Connected to Websocket for data.")
           }
           if (this.aggCamWsStatus.status==='disconnected'){
-            console.log("[Init] connecting to Websocket For status...")
+            initLogger.info("Connecting to Websocket For status...")
             await this.aggCamWsStatus.connect()
-            console.log("[Init] connected to Websocket for status.")  
+            initLogger.info("Connected to Websocket for status.")  
           }
           clearTimeout(wsAndAggTimeOut)
           wsAndAggTimeOut=null;
@@ -179,22 +184,22 @@ export default class Initialization {
           this.greenLed.setState('off')
           if (wsAndAggTimeOut===null){
             wsAndAggTimeOut=setTimeout(()=>{
-              console.log("[Init] RESTARTING WSANDAGG SERVICE")
+              initLogger.warn(" RESTARTING WSANDAGG SERVICE")
               child.exec(`sudo systemctl restart wsAndAgg.service`)
               wsAndAggTimeOut=null;
             },60000)
           }
           
-          console.log('[Init] error occurred: ',err)
+          initLogger.error('Error occurred: ',err)
           retryDelay=10;
         }
 
       }else if(this.state.connectingToAggCam){
         try{
-            console.log("[Init] connecting to aggregation camera...")
+            initLogger.info("Connecting to aggregation camera...")
             const AggCamStatus = await this.aggCam.getStatus()
             if (AggCamStatus==='Ok'){
-              console.log("[Init] connected aggregation camera") 
+              initLogger.info("Connected aggregation camera") 
               this.state.connectingToAggCam = false;
             this.state.connectingToPrinter = true
           if (retryDelay>0){
@@ -207,7 +212,7 @@ export default class Initialization {
             }else{
               this.yellowLed.setState('blinkFast',2);
               this.greenLed.setState('off');
-              console.log('[Init] error occurred : agg cam is not connected');
+              initLogger.error('Error occurred : agg cam is not connected');
               retryDelay=10;
             }
             
@@ -217,21 +222,21 @@ export default class Initialization {
             this.state.connectingToWS = true;
             this.yellowLed.setState('blinkFast',2);
             this.greenLed.setState('off');
-            console.log('[Init] error occurred1: ',err);
+            initLogger.error('Error occurred: ',err);
             retryDelay=10;
           }
             
       }else if(this.state.connectingToPrinter){
         try{
             if (!this.printer.running){
-              console.log("[Init] connecting to printer...")
+              initLogger.info("Connecting to printer...")
               await this.printer.connect();
-              console.log("[Init] connected to printer")
+              initLogger.info("Connected to printer")
             }
             try {
               await this.printer.stopPrint()
             } catch (error) {
-              console.log("[Init] error on stopping printer", error)
+              initLogger.error("Error on stopping printer", error)
             }
             this.state.connectingToPrinter = false;
             this.state.connectingToSerCam = true;
@@ -245,15 +250,15 @@ export default class Initialization {
           }catch(err){
             this.yellowLed.setState('blinkFast', 3);
             this.greenLed.setState('off');
-            console.log('[Init] error occurred: ',err);
+            initLogger.error('Error occurred: ',err);
             retryDelay=10;
           }
       }else if(this.state.connectingToSerCam){
         try{
           if(!this.serCam.running){
-            console.log("[Init] connecting to serialization camera...")
+            initLogger.info("Connecting to serialization camera...")
             await this.serCam.connect();
-            console.log("[Init] connected to serialization camera")
+            initLogger.info("Connected to serialization camera")
           }
           
           this.state.connectingToSerCam = false;
@@ -268,14 +273,14 @@ export default class Initialization {
         }catch(err){
           this.yellowLed.setState('blinkFast', 4);
           this.greenLed.setState('off');
-          console.log('[Init] error occurred: ',err);
+          initLogger.info('Error occurred: ',err);
           retryDelay=10;
         }        
       }else if(this.state.weighingScaleCheck){
         try{
-          console.log("[Init] connecting to weighing scale...")
+          initLogger.info("Connecting to weighing scale...")
           await weighingScaleDao.readWeight();
-          console.log("[Init] connected to weighing scale")
+          initLogger.info("Connected to weighing scale")
           this.state.weighingScaleCheck = false;
           this.state.finalChecks = true;
             if (retryDelay>0){
@@ -288,7 +293,7 @@ export default class Initialization {
         }catch(err){
           this.yellowLed.setState('blinkFast', 5);
           this.greenLed.setState('off');
-          console.log('[Init] error occurred: ',err);
+          initLogger.error('Error occurred: ',err);
           retryDelay=10;
         }                
       }else if (this.state.rejectorCheck){
@@ -296,11 +301,11 @@ export default class Initialization {
         this.greenLed.setState('on');
         let greenButtonPressed=false
         this.greenButton.setShortPressCallback(() => {
-          console.log('Green short press detected.');
+          initLogger.info('Green short press detected.');
           greenButtonPressed=true
         });
         this.yellowButton.setShortPressCallback(async () => {
-          console.log('Yellow short press detected.');
+          initLogger.info('Yellow short press detected.');
           await this.rejector.test();
         });
         await this.rejector.test();
@@ -317,49 +322,54 @@ export default class Initialization {
       // final checks
         
         try {
-          console.log("[Init] final checks")
+          initLogger.info("Final checks")
           await sleep(10)
           if (this.MongoDB.isConnected ){
-            console.log("[Init] MongoDB connection is finalized")
+            initLogger.info("MongoDB connection is finalized")
             
           }else{throw new Error("MonggoDB")}
           if (this.aggCamWsData.status==='connected'){
-            console.log("[Init] Aggregation cam. websocoket for data connection is finalized")
+            initLogger.info("Aggregation cam. websocoket for data connection is finalized")
           }else{throw new Error("Aggregation WS for data")}
 
             if(this.backEndWS.status==='disconnected'){
             try {
               await this.backEndWS.connect()
-              this.backEndWS.ws.on('message',(message)=>{
-                const str = message.toString()
-                console.log("Incoming HealthCheck from BE :", str)
-                this.backEndWS.sendMessage(str)
-              })
+              
             } catch (error) {
               console.log("[Init] error while connecting to backend websocket",error)
             }
-            
+            this.backEndWS.ws.on('message', (message)=>{
+              const str = message.toString()
+              beWsLogger.info("Incoming HealthCheck from BE :", str)
+              try{
+                this.backEndWS.sendMessage(str)
+              }catch(err){
+                beWsLogger.error(err)
+              }
+              
+            })
            
           }
           if (this.backEndWS.status==='connected'){
-            console.log("[Init] BE's websocoket for data connection is finalized")
+            initLogger.info("BE's websocoket for data connection is finalized")
           }else{throw new Error("Aggregation WS for BE")}
           if(this.aggCamWsStatus.status==='connected'){
-            console.log("[Init] Aggregation cam. websocoket for status connection is finalized")
+            initLogger.info("Aggregation cam. websocoket for status connection is finalized")
           }else{throw new Error("Aggregation WS for status")} 
           if (await this.aggCam.getStatus()==='Ok'){
-            console.log("[Init] Aggregation cam. connection is finalized")
+            initLogger.info("Aggregation cam. connection is finalized")
           }else{throw new Error("Aggregation Camera")}
           if (this.printer.running){
-            console.log("[Init] Printer connection is finalized")
+            initLogger.info("Printer connection is finalized")
           }else{throw new Error("Printer")}
           if(this.serCam.running){
-            console.log("[Init] Serialization camera connection is finalized")
+            initLogger.info("Serialization camera connection is finalized")
           }else{throw new Error("Serialization Camera")}
                 
           await weighingScaleDao.readWeight();
           let res = await getDataToAPI("health-check");
-          console.log(res.status)
+          initLogger.info(res.status)
           if(res==null || res.status!=HttpStatusCode.Ok){
             throw new Error("Server is not ready")
           }
@@ -400,7 +410,7 @@ export default class Initialization {
             this.state.rejectorCheck=true;
             end=false;
             
-          console.log("[Init] need to re initialize", error)
+            initLogger.error("Need to re initialize", error)
         }
         
       }
@@ -413,7 +423,7 @@ export default class Initialization {
       // console.log("arguments:",args);
       this.reRun(...args)})
     problematicPeripheral=null;
-    console.log("[Initialisazion] inisialization has been completed")
+    initLogger.info("Inisialization has been completed")
   }
 
 }
