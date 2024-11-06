@@ -539,7 +539,7 @@ export default class printProcess {
                             this.full_code_queue.enqueue(serialization.full_code)
                             const updateResult = await this.updateStatus(this.db, serialization.id);
                             if (updateResult.status === 'success') {
-                                printPLogger.log("Status updated successfully.");
+                                printPLogger.info("Status updated successfully.");
                             } else if (updateResult.status === 'not_found') {
                                 printPLogger.error("Document not found, no status update performed.");
                                 this.abort("Document not found, no status update performed.");
