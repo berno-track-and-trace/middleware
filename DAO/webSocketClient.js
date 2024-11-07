@@ -23,7 +23,7 @@ class WebSocketClient {
         }
         this.ws = null;
         const url = this.port===null?this.ip:`ws://${this.ip}:${this.port}`;
-        console.log(`[${this.clientName}] url :`, url)
+        // console.log(`[${this.clientName}] url :`, url)
         const headers = {
           'Client-ID': this.clientId
         };

@@ -2,7 +2,7 @@ import { Low } from 'lowdb';
 import { JSONFile } from 'lowdb/node';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
-
+import { middlewareLogger } from '../utils/logger';
 class LowDB {
   constructor(JSONFilePath) {
     const __filename = fileURLToPath(import.meta.url);
@@ -31,9 +31,9 @@ class LowDB {
       // Read data from JSON file
       await this.db.read();
 
-      console.log("[LowDB] initializing is completed")
+      middlewareLogger.info("[LowDB] initializing is completed")
     } catch (error) {
-      console.error('[LowDB] Error initializing the database:', error);
+      middlewareLogger.error('[LowDB] Error initializing the database:', error);
     }
   }
 
@@ -42,7 +42,7 @@ class LowDB {
     try {
       return this.db.data[key];
     } catch (error) {
-      console.error(`[LowDB] Error getting config value for key "${key}":`, error);
+      middlewareLogger.error(`[LowDB] Error getting config value for key "${key}":`, error);
     }
   }
 
@@ -52,7 +52,7 @@ class LowDB {
       this.db.data[key] = value;
       await this.db.write();
     } catch (error) {
-      console.error(`[LowDB] Error setting config value for key "${key}":`, error);
+      middlewareLogger.error(`[LowDB] Error setting config value for key "${key}":`, error);
     }
   }
 
@@ -61,7 +61,7 @@ class LowDB {
     try {
       return this.db.data;
     } catch (error) {
-      console.error('[LowDB] Error getting all config values:', error);
+      middlewareLogger.error('[LowDB] Error getting all config values:', error);
     }
   }
 }
