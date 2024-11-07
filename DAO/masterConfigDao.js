@@ -2,7 +2,7 @@ import { Low } from 'lowdb';
 import { JSONFile } from 'lowdb/node';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { middlewareLogger } from '../utils/logger';
+import { middlewareLogger } from '../utils/logger.js';
 class LowDB {
   constructor(JSONFilePath) {
     const __filename = fileURLToPath(import.meta.url);
