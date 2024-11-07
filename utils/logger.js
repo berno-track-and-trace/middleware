@@ -1,6 +1,7 @@
 import winston from 'winston';
 import path from 'path';
 import 'winston-daily-rotate-file';
+import { create } from 'domain';
 
 const createLogger = (peripheral) => {
   const transports = [
@@ -56,3 +57,4 @@ export const mongoDBLogger = createLogger('mongoDB')
 export const beWsLogger = createLogger('backEndWebSocket')
 export const apiCallLogger = createLogger('APICall')
 export const apiServerLogger = createLogger('apiServer')
+export const middlewareLogger = createLogger('middleware')

@@ -38,5 +38,8 @@
   "bugs": {
     "url": "https://github.com/berno-track-and-trace/middleware/issues"
   },
-  "homepage": "https://github.com/berno-track-and-trace/middleware#readme"
+  "homepage": "https://github.com/berno-track-and-trace/middleware#readme",
+  "devDependencies": {
+    "winston-logs-display": "^1.0.0"
+  }
 }

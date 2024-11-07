@@ -16,11 +16,12 @@ import HealthChecks from './DAO/healthCheck.js';
 import Initialization from './init.js'
 import Button from './DAO/buttonDao.js';
 import LED from './DAO/ledDao.js';
+import { middlewareLogger } from './utils/logger.js';
 
 
-console.log("Starting middleware...")
+middlewareLogger.info("Starting middleware...")
 process.on('unhandledRejection', (err) => {
-    console.error('Unhandled Promise Rejection:', err);
+    middlewareLogger.error('Unhandled Promise Rejection:', err);
     // Handle the error gracefully or log it
 });
 
@@ -34,9 +35,9 @@ const masterConfig = new lowDB('../utils/master-config.json');
 
     // Get all configuration values and convert to a JSON string
     //const allConfig = masterConfig.getAllConfig();
-    console.log(`regex: ${JSON.stringify(masterConfig.getConfig('rejector').REGEX_PATTERNS, null, 2)}`);
+    middlewareLogger.info(`regex: ${JSON.stringify(masterConfig.getConfig('rejector').REGEX_PATTERNS, null, 2)}`);
   } catch (error) {
-    console.error('Error in index.js:', error);
+    middlewareLogger.error('Error in index.js:', error);
   }
 })();
 const mongoDB = new MongoDB(process.env.MONGODB_URI, process.env.DATABASE_NAME) // settiing up mongodb connection
@@ -80,17 +81,17 @@ const printer = new TIJPrinter(process.env.TiJPrinter_IP, process.env.TiJPrinter
 
 
 const init = new Initialization(mongoDB, AggCamWsData,AggCamWsStatus, aggCam, printer,serialCamera, rejector, yellowLed,greenLed,yellowButton,greenButton, healthChecksWs, printerSensor )
-console.log("Initializing...")
+middlewareLogger.info("Initializing...")
 await init.run();
 
-console.log("Initialization is completed !")
+middlewareLogger.info("Initialization is completed !")
 
 
 
 
 const printingProcess = new printProcess(printer, mongoDB, printerSensor) // instancing printing process class with printer and mongoDB instances as the constructor
 serialCamera.printProcess=printingProcess
-console.log(`test master : ${printingProcess.templateName}`)
+middlewareLogger.info(`test master : ${printingProcess.templateName}`)
 
 await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -99,11 +100,11 @@ startHTTPServer(process.env.SERVER_PORT)
 
 
 process.on('SIGTERM', () => {
-  console.info('SIGTERM signal received.');
-  console.log('Closing http server.');
+  middlewareLogger.info('SIGTERM signal received.');
+  middlewareLogger.info('Closing http server.');
   healthChecksWs.disconnect();
   app.close(() => {
-    console.log('Http server closed.');
+    middlewareLogger.info('Http server closed.');
   });
 });
 

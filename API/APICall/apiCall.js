@@ -93,7 +93,7 @@ export async function putDataToAPI(route, data) {
 }
 export async function getDataToAPI(route, data=null) {
   const url = process.env.API_URL+route
-  console.log("Get req to : ",url)
+  // console.log("Get req to : ",url)
   
   try {
     clearInterval(hcInterval)
@@ -106,10 +106,10 @@ export async function getDataToAPI(route, data=null) {
       // 'ReqID':response.headers['x-request-id'],
       // 'response':response
     }
-    console.log(jsonRes)
+    // console.log(jsonRes)
 
     const msg = JSON.stringify(jsonRes)
-    console.log(msg)
+    // console.log(msg)
     apiCallLogger.info(jsonRes)
 
     return  response
