@@ -373,7 +373,7 @@ export default class Initialization {
           if(res==null || res.status!=HttpStatusCode.Ok){
             throw new Error("Server is not ready")
           }
-          initLogger.info("Server is ready")
+          initLogger.info("Server connection is finalized")
           this.yellowLed.setState('blinkFast', 3)
           this.greenLed.setState('blinkFast', 3)
           this.state.rejectorCheck=false;
