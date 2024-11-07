@@ -539,10 +539,10 @@ export default class printProcess {
                             this.full_code_queue.enqueue(serialization.full_code)
                             const updateResult = await this.updateStatus(this.db, serialization.id);
                             if (updateResult.status === 'success') {
-                                printPLogger.info("Status updated successfully.");
+                                printPLogger.info(`SN :${serialization.SN} updated to be PRINTED successfully on DB.`);
                             } else if (updateResult.status === 'not_found') {
-                                printPLogger.error("Document not found, no status update performed.");
-                                this.abort("Document not found, no status update performed.");
+                                printPLogger.error(`Document id ${serialization.id} is not found, no status update performed.`);
+                                this.abort(`Document id ${serialization.id} is not found, no status update performed.`);
                                 release();
                                 return false;
                             } else if (updateResult.status === 'max_retries_reached') {

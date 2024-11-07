@@ -105,7 +105,7 @@ async function _readWeight() {
         parser.on('data', data => {
           clearTimeout(timeout);
           const weight = parseFloat(data.trim());
-          weighingScaleLogger.info('Data:', weight);
+          weighingScaleLogger.info(`Data: ${weight}`);
           errorOnReading = true;
 
           if (!isNaN(weight)) {
