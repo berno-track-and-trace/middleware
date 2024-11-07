@@ -369,10 +369,11 @@ export default class Initialization {
                 
           await weighingScaleDao.readWeight();
           let res = await getDataToAPI("health-check");
-          initLogger.info(res.status)
+          
           if(res==null || res.status!=HttpStatusCode.Ok){
             throw new Error("Server is not ready")
           }
+          initLogger.info("Server is ready")
           this.yellowLed.setState('blinkFast', 3)
           this.greenLed.setState('blinkFast', 3)
           this.state.rejectorCheck=false;
