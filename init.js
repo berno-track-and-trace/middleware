@@ -334,10 +334,11 @@ export default class Initialization {
 
             if(this.backEndWS.status==='disconnected'){
             try {
+              initLogger.info("Connecting to backend's websocket")
               await this.backEndWS.connect()
-              
+            
             } catch (error) {
-              console.log("[Init] error while connecting to backend websocket",error)
+              initLogger.error("Error while connecting to backend websocket",error)
             }
             this.backEndWS.ws.on('message', (message)=>{
               const str = message.toString()
