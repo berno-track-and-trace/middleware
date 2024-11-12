@@ -599,6 +599,7 @@ export default class printProcess {
                 this.printer.localBufferCount= this.full_code_queue.size()
                 printingScanning.emit("printed",printed);
                 if(this.full_code_queue.isEmpty()){
+                    printPLogger.info("waiting for a last box to pass")
                     while(this.printer.aBoxIsPrintedCompletely===false){
                         // console.log("[printing process] waiting a box to be completely printed...")
                         await new Promise(resolve => setTimeout(resolve, 100)) // waiting for the last box to be completely printed

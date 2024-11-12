@@ -43,7 +43,7 @@ export default class Initialization {
   }
   async reRun(peripheral,reason="no reason", rejectorCheck=false) {
     // const release = await mutex.acquire();
-    initLogger.info(`${peripheral} is commiting a re-initialization. Reason`, reason)
+    initLogger.info(`${peripheral} is commiting a re-initialization. Reason : ${reason}` )
     problematicPeripheral =peripheral;
     try {
 

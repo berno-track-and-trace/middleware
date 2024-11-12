@@ -67,7 +67,7 @@ export default class serCam {
                     await new Promise(resolve => setTimeout(resolve, 5000));
                     if (currentPrintSignalCount<this.printedTimeOutQueue.size()){
                         serCamLogger.error("[SerCam] The camera sensor might be disconnected from GPIO, please check the connection")
-                        needToReInit.emit("pleaseReInit", "serCam", "sensor might be disconnected to GPIO", true); 
+                        // needToReInit.emit("pleaseReInit", "serCam", "sensor might be disconnected to GPIO", true); 
                     }else{
                         serCamLogger.warn("[SerCam] The camera sensor might be disconnected from GPIO or the conveyor is not running")
                     }
@@ -78,7 +78,7 @@ export default class serCam {
                     printedTimeOutFlag=false;
                 }  
                 
-            },2000)
+            },5000)
          
         })
             
@@ -315,7 +315,8 @@ export default class serCam {
         serCamLogger.info({
             'result':result,
             'reason':reason,
-            'code' : code
+            'code' : code,
+            'accuracy': data.accuracy
         })
 
         return {result,reason,code}

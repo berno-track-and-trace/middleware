@@ -101,8 +101,9 @@ export default class TIJPrinter {
                                 'printerBufferCount':bufferCount,
                                 'localBufferCount':this.localBufferCount
                             })
-                            rejectorCheck=true;
-                            throw new Error("Middleware possibly can't get signal from printer sensor")
+                            // rejectorCheck=true;
+                            rejectorCheck=false;
+                            printerLogger.error("Middleware possibly can't get signal from printer sensor")
                         }
                     }catch(error){
                         throw new Error(error)
@@ -525,7 +526,7 @@ export default class TIJPrinter {
                             printerLogger.warn("[Printer] The editing area's message is being edited when going to start print in grouping.")
                             break;
                         default:
-                            throw new Error("unknown P_Status");
+                            throw new Error(`unknown P_Status: ${responseBuffer[3]}`);
                     }
 
                 } else {
@@ -549,7 +550,7 @@ export default class TIJPrinter {
                             printerLogger.info("[Printer] Print not started. The print has been stopped.")
                             return true;
                         default:
-                            throw new Error("unknown P_Status : ", responseBuffer[3]);
+                            throw new Error(`unknown P_Status: ${responseBuffer[3]}`);
                     }
 
                 } else {

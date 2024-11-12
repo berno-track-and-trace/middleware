@@ -8,7 +8,7 @@ const createLogger = (peripheral) => {
     new winston.transports.DailyRotateFile({
       filename: process.env.COMBINE_LOGS === 'true' ? path.join('logs', `%DATE%-combined.log`) : path.join('logs', `%DATE%-${peripheral}.log`),
       datePattern: 'YYYY-MM-DD',
-      maxFiles: '1d',
+      maxFiles: '7d',
       level: process.env.FILE_LOG_LEVEL || 'info',
       format: winston.format.combine(
         winston.format.timestamp(),

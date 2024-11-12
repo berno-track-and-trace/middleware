@@ -26,6 +26,7 @@ const getWeight = async (req,res) =>{
     try{
         
         clearInterval(weighingScaleDao.hcInterval);
+        apiCallLogger.info(`getWeight is called`);
         let weight= await getData()
         
         weighingScaleDao.normalProcessFlag=true;
