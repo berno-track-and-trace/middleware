@@ -14,7 +14,7 @@ const mutex = new Mutex();
 const pipePath = '/tmp/middleware-failsafe-pipe'
 export let problematicPeripheral=null;
 export default class Initialization {
-  constructor(DB,aggCamWsData,aggCamWsStatus, aggCam, printer, serCam, rejector, yellowLed, greenLed, yellowButton, greenButton , backEndWS){
+  constructor(DB,aggCamWsData,aggCamWsStatus, aggCam, printer, serCam, rejector, yellowLed, greenLed, yellowButton, greenButton , backEndWS, printerSensor, serCamSensor){
     this.MongoDB = DB
     this.aggCamWsData = aggCamWsData,
     this.aggCamWsStatus = aggCamWsStatus,
@@ -39,6 +39,8 @@ export default class Initialization {
       rejectorCheck:true,
       finalChecks:false
     }
+    this.serCamSensor = serCamSensor;
+    this.printerSensor = printerSensor;
   
   }
   async reRun(peripheral,reason="no reason", rejectorCheck=false) {
@@ -299,19 +301,64 @@ export default class Initialization {
       }else if (this.state.rejectorCheck){
         this.yellowLed.setState('on');
         this.greenLed.setState('on');
-        let greenButtonPressed=false
+        let greenButtonPressed=false;
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        fs.open(pipePath, 'w', (err, fd) => {
+            if (err) {
+              console.error('Failed to open named pipe:', err);
+              return;
+            }
+          
+            fs.write(fd, 'on', (err) => {
+              if (err) {
+                console.error('Failed to write to named pipe:', err);
+              } else {
+                console.log('Message sent: on');
+              }
+          
+              fs.close(fd, (err) => {
+                if (err) {
+                  console.error('Failed to close named pipe:', err);
+                }
+              });
+            });
+          });
+          this.serCamSensor.setInstantCallback( ()=> {
+            console.log("ser cam up")
+            this.yellowLed.setState('off');
+          })
+          this.serCamSensor.setFallingEdgeCallback(()=> {
+            console.log("ser cam down")
+            this.yellowLed.setState('on')
+        })
+        this.printerSensor.setInstantCallback( ()=> {
+          console.log("printer up")
+          this.greenLed.setState('off');
+        })
+        this.printerSensor.setFallingEdgeCallback(()=> {
+          console.log("printer down")
+          this.greenLed.setState('on')
+      })
+      
+        
         this.greenButton.setShortPressCallback(() => {
           initLogger.info('Green short press detected.');
-          greenButtonPressed=true
+          greenButtonPressed=true;
         });
         this.yellowButton.setShortPressCallback(async () => {
           initLogger.info('Yellow short press detected.');
           await this.rejector.test();
         });
         await this.rejector.test();
+        console.log("woy")
         while (!greenButtonPressed && this.firstRun===true){
           await sleep(1/10)
         }
+        // this.serCamSensor=null;
+
+        this.printerSensor=null;
+     
         this.yellowLed.setState('blinkSlow')
         this.greenLed.setState('blinkSlow')
         this.state.rejectorCheck=false;
@@ -425,6 +472,14 @@ export default class Initialization {
       // console.log("arguments:",args);
       this.reRun(...args)})
     problematicPeripheral=null;
+    this.serCamSensor.setInstantCallback( ()=> {
+      // console.log(this, this.print3)
+      this.serCam.objectScanned=true;
+      this.serCam.scanned();
+  })
+  this.serCamSensor.setFallingEdgeCallback( () => {
+    this.serCam.objectScanned=false;
+  })
     initLogger.info("Inisialization has been completed")
   }
 
