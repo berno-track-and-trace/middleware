@@ -1,0 +1,10 @@
+@startuml test
+control middleware as mw
+database mongodb as mdb
+
+mw -> mdb: Fetch data
+
+alt data exists
+    mw -> mw: validate data
+end
+@enduml

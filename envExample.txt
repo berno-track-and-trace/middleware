@@ -1,0 +1,30 @@
+# MongoDB:
+#MONGODB_URI = mongodb://localhost:27017/?directConnection=true
+MONGODB_URI = mongodb://seratonic:53r4t0n1cm0n90@192.168.132.65:27017/?directConnection=true
+DATABASE_NAME = seratonic
+
+# TiJPrinter :
+TiJPrinter_IP = 192.168.132.20
+TiJPrinter_PORT = 8010
+TiJPrinter_SLAVE_ADDRESS = 00
+
+#Serialization Camera :
+SERIALIZATION_CAM_IP = 192.168.132.30
+SERIALIZATION_CAM_PORT = 9004
+
+#REJECTOR :
+REJECTOR_INPUT_PIN = 17
+REJECTOR_OUTPUT_PIN = 6
+
+#Server :
+SERVER_PORT = 3000
+
+#API_URL = http://staging--seratonic-api-station.techtonic.id/
+API_URL = http://api-station.seratonic-rnd.local
+
+#WEB_SOCKET
+WS_IP = localhost
+WS_PORT = 9002
+
+
+

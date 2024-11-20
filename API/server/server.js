@@ -1,19 +1,19 @@
 import express from 'express';
+import routesv1 from './masterRoutes.js';
+
 
 const app = express();
-const port = 3000; // TODO put on env
 
+
+// Middleware to parse JSON bodies
+app.use(express.json());
 
 // Define API routes
-import routesv1 from './masterRoutes.js';
 routesv1(app);
 
 // Start the server
-export function startHTTPServer (){
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
-
+export default function startHTTPServer(port) {
+  app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+  });
 }
-
-//startHTTPServer();
