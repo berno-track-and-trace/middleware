@@ -7,7 +7,7 @@ import pkg from 'node-libgpiod';
 import Queue from '../utils/queue.js';
 import {serCamLogger} from '../utils/logger.js'
 
-const { version, Chip, Line } = pkg;
+// const { version, Chip, Line } = pkg;
 // import { eventNames } from 'process';
 import { clear } from 'console';
 function removeSpacesAndNewlines(inputString) {
@@ -33,13 +33,14 @@ export default class serCam {
         this.healthCheckInterval=null;
         this.healthCheckTimeout=null;
         this.sensorReadingInterval=null;
+        this.objectDetected=false;
         // this.setSensorCallBack();
 
-        this.chip = new Chip(4);
-        this.line = new Line(this.chip, 5);
-        this.line.requestInputMode();
+        // this.chip = new Chip(4);
+        // this.line = new Line(this.chip, 5);
+        // this.line.requestInputMode();
 
-        this.setIntervalSensorReading(50);
+        // this.setIntervalSensorReading(50);
         
         
         this.rejectTimeOut=null
@@ -83,69 +84,124 @@ export default class serCam {
         })
             
     }
-    setIntervalSensorReading(timeInterval){
-        this.sensorReadingInterval = setInterval(()=>{
-            if(this.line.getValue()===1){
+    // setIntervalSensorReading(timeInterval){
+    //     this.sensorReadingInterval = setInterval(()=>{
+    //         if(this.line.getValue()===1){
                 
-                clearTimeout(this.rejectTimeOut)
-                clearInterval(this.sensorReadingInterval)
-                this.rejection.removeAllListeners()
-                serCamLogger.info("Sensor is triggered")
-                let printed=null;
-                if(!this.printedTimeOutQueue.isEmpty()){
-                    printed = this.printedTimeOutQueue.dequeue();
-                    clearTimeout(printed.timeOut)
-                }
-                this.rejectTimeOut = setTimeout( async ()=>{
-                    serCamLogger.error("Time out occured while waiting data from camera")
+    //             clearTimeout(this.rejectTimeOut)
+    //             clearInterval(this.sensorReadingInterval)
+    //             this.rejection.removeAllListeners()
+    //             serCamLogger.info("Sensor is triggered")
+    //             let printed=null;
+    //             if(!this.printedTimeOutQueue.isEmpty()){
+    //                 printed = this.printedTimeOutQueue.dequeue();
+    //                 clearTimeout(printed.timeOut)
+    //             }
+    //             this.rejectTimeOut = setTimeout( async ()=>{
+    //                 serCamLogger.error("Time out occured while waiting data from camera")
 
                     
 
-                    await this.rejector.reject(0)
-                    while(this.line.getValue===1){
-                        await this.rejector.reject(0)
-                    }
-                    await postDataToAPI(`v1/work-order/${printingProcess.work_order_id}/assignment/${printingProcess.assignment_id}/serialization/validate`,{ 
-                        accuracy:0,
-                        status:"rejected",
-                        code:null,
-                        reason:"CAM_ERROR",
-                        event_time:Date.now()
-                    }) 
-                    while(this.line.getValue===1){
-                        await this.rejector.reject(242)
-                    }
-                    this.rejection.removeAllListeners()
-                    this.setIntervalSensorReading(50);
-                }, 242)
+    //                 await this.rejector.reject(0)
+    //                 while(this.line.getValue===1){
+    //                     await this.rejector.reject(0)
+    //                 }
+    //                 await postDataToAPI(`v1/work-order/${printingProcess.work_order_id}/assignment/${printingProcess.assignment_id}/serialization/validate`,{ 
+    //                     accuracy:0,
+    //                     status:"rejected",
+    //                     code:null,
+    //                     reason:"CAM_ERROR",
+    //                     event_time:Date.now()
+    //                 }) 
+    //                 while(this.line.getValue===1){
+    //                     await this.rejector.reject(242)
+    //                 }
+    //                 this.rejection.removeAllListeners()
+    //                 this.setIntervalSensorReading(50);
+    //             }, 242)
 
-                this.rejection.once("reject", async ()=>{
+    //             this.rejection.once("reject", async ()=>{
                     
-                    await this.rejector.reject()
+    //                 await this.rejector.reject()
 
-                    this.rejection.removeAllListeners()
-                    while(this.line.getValue()===1){
-                        await this.rejector.reject()
-                    }
-                    this.setIntervalSensorReading(50);
-                })
-                this.rejection.once("pass", async ()=>{
-                    serCamLogger.info("An object is passed")
+    //                 this.rejection.removeAllListeners()
+    //                 while(this.line.getValue()===1){
+    //                     await this.rejector.reject()
+    //                 }
+    //                 this.setIntervalSensorReading(50);
+    //             })
+    //             this.rejection.once("pass", async ()=>{
+    //                 serCamLogger.info("An object is passed")
 
-                    this.rejection.removeAllListeners()
-                    while(this.line.getValue()===1){
-                        await new Promise(resolve => setTimeout(resolve, 50));
-                    }
-                    this.setIntervalSensorReading(50);
+    //                 this.rejection.removeAllListeners()
+    //                 while(this.line.getValue()===1){
+    //                     await new Promise(resolve => setTimeout(resolve, 50));
+    //                 }
+    //                 this.setIntervalSensorReading(50);
                     
                     
-                })
-            }
+    //             })
+    //         }
 
         
-        },timeInterval)
+    //     },timeInterval)
+    // }
+
+    async scanned(){
+                
+        clearTimeout(this.rejectTimeOut)
+        // clearInterval(this.sensorReadingInterval)
+        this.rejection.removeAllListeners()
+        serCamLogger.info("Sensor is triggered")
+        let printed=null;
+        if(!this.printedTimeOutQueue.isEmpty()){
+            printed = this.printedTimeOutQueue.dequeue();
+            clearTimeout(printed.timeOut)
+        }
+        this.rejectTimeOut = setTimeout( async ()=>{
+            serCamLogger.error("Time out occured while waiting data from camera")
+
+            
+
+            await this.rejector.reject(0)
+            while(this.line.getValue===1){
+                await this.rejector.reject(0)
+            }
+            await postDataToAPI(`v1/work-order/${printingProcess.work_order_id}/assignment/${printingProcess.assignment_id}/serialization/validate`,{ 
+                accuracy:0,
+                status:"rejected",
+                code:null,
+                reason:"CAM_ERROR",
+                event_time:Date.now()
+            }) 
+            while(this.objectDetected){
+                await this.rejector.reject(242)
+            }
+            this.rejection.removeAllListeners()
+        }, 242)
+
+        this.rejection.once("reject", async ()=>{
+            
+            await this.rejector.reject()
+
+            this.rejection.removeAllListeners()
+            while(this.objectDetected){
+                await this.rejector.reject()
+            }
+            this.setIntervalSensorReading(50);
+        })
+        this.rejection.once("pass", async ()=>{
+            serCamLogger.info("An object is passed")
+
+            this.rejection.removeAllListeners()
+            while(this.objectDetected){
+                await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            this.setIntervalSensorReading(50);
+            
+            
+        })
     }
-    
    async setHealthCheckInterval(){
         this.healthCheckInterval= setInterval(() => {
             try {

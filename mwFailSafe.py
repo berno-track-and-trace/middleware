@@ -79,6 +79,7 @@ try:
             with open(pipe_path, 'r') as pipe:
                 message = pipe.read()
                 if message:
+                    # print(message)
                     if message=="on" and gpio_line.get_value()==1: 
                         gpio_line.set_value(0)
                         print("sensor is activated by middleware")

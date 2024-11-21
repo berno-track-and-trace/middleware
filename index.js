@@ -56,7 +56,7 @@ const yellowLed = new LED(process.env.AGGREGARTE_BUTTON_LIGHT_OUTPUT_PIN)
 const greenLed = new LED(process.env.LABEL_PRINTER_BUTTON_LIGHT_OUTPUT_PIN)
 
 const printerSensor = new Button(17,0)
-// const serCamSensor = new Button(5,0)
+const serCamSensor = new Button(5,0)
 
 
 
@@ -80,7 +80,7 @@ const printer = new TIJPrinter(process.env.TiJPrinter_IP, process.env.TiJPrinter
 
 
 
-const init = new Initialization(mongoDB, AggCamWsData,AggCamWsStatus, aggCam, printer,serialCamera, rejector, yellowLed,greenLed,yellowButton,greenButton, healthChecksWs, printerSensor )
+const init = new Initialization(mongoDB, AggCamWsData,AggCamWsStatus, aggCam, printer,serialCamera, rejector, yellowLed,greenLed,yellowButton,greenButton, healthChecksWs, printerSensor, serCamSensor )
 middlewareLogger.info("Initializing...")
 await init.run();
 
