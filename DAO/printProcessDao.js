@@ -70,7 +70,7 @@ export default class printProcess {
         
         
     }
-    async getCodeDetails(db) {
+    async getCodeDetails(db) { // TODO : move to mongoDB
         try {
             if (this.mongoDB.healthCheckInterval){
                 clearInterval(this.mongoDB.healthCheckInterval)
@@ -107,7 +107,7 @@ export default class printProcess {
         }
     }
     
-    async getDataBySmallestId(db, maxRetries = 2, retryDelay = 500) {
+    async getDataBySmallestId(db, maxRetries = 2, retryDelay = 500) { // TODO : move to mongoDB
         let attempts = 0;
     
         while (attempts < maxRetries) {
@@ -172,7 +172,7 @@ export default class printProcess {
     }
 
     
-    async updateStatus(db, serializationId, status = "PRINTING", maxRetries = 2, retryDelay = 500) {
+    async updateStatus(db, serializationId, status = "PRINTING", maxRetries = 2, retryDelay = 500) { // TODO : move to mongoDB
         let attempts = 0;
         if (this.mongoDB.healthCheckInterval){
             clearInterval(this.mongoDB.healthCheckInterval)

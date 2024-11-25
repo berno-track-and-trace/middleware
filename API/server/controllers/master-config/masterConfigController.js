@@ -1,8 +1,9 @@
 import { printingProcess, printer, serialCamera, rejector, masterConfig} from "../../../../index.js";
 import printerTemplate from "../../../../utils/printerTemplates.js";
 
-// TODO: store in disk/not volatile memory (Done)
-
+// const setPrintDetailsReqs = { //TODO : define body checks using joi
+    
+// }
 // Function to set accuracy threshold for serial camera
 const setAccuracyThreshold = async (req, res) => {
     try {
@@ -122,7 +123,22 @@ const getAllConfigParameters = (req, res) => {
         console.error(err);
         res.status(500).send({ status: "FAILED", message: "Internal Server Error" });
     }
+
+
 };
 
+const setPrintDetails = async (req, res) =>{
+    try {
+        const details = await this.printingProcess.getCodeDetails(this.printingProcess.db)
+        // checks details here
+        this.printingProcess.details= details;
+        
+        res.status(200).status(details)
+        
+    } catch (error) {
+        res.status(400).send({error:error})
+    }
+}
 
-export default { changeParameter, getConfigParameterByKey, getAllConfigParameters};
+
+export default { changeParameter, getConfigParameterByKey, getAllConfigParameters, setPrintDetails};

@@ -70,15 +70,18 @@ const startPrinting = async (req, res) => {
           serialCamera.accuracyThreshold=req.body.threshold
       }
       }
-      if(req.body.work_order_id){
-          printingProcess.work_order_id = req.body.work_order_id
-      }else{missingBody="work_order_id"}
+      if (!serialCamera.accuracyThreshold)
+      // if(req.body.work_order_id){
+      //     printingProcess.work_order_id = req.body.work_order_id
+      // }else{missingBody="work_order_id"}
+      if(printingProcess.work_order_id){missingBody="work_order_id"}
       if(req.body.assignment_id){
           printingProcess.assignment_id = req.body.assignment_id
       }else{missingBody=missingBody+" and assignment_id"}
   
       if (missingBody!=""){
-          return res.status(400).send({message: `Missing mandatory payload in request body. (${missingBody})`})
+          // return res.status(400).send({message: `Missing mandatory payload in request body. (${missingBody})`})
+          return res.status(400).send({message: `Please set the ${missingBody} first!`})
       }
   
       if((req.body.templateName) && req.body.templateName  in printerTemplate){
@@ -121,7 +124,7 @@ const startPrinting = async (req, res) => {
             
         }else{
 
-            return res.status(500).send({message:"unknown issue, printer is not started"})
+            return res.status(500).send({message:"unknown issue, printing is not started"})
         }
     }catch(err){
         apiServerLogger.error(err)
