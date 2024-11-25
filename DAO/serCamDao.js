@@ -188,7 +188,6 @@ export default class serCam {
             while(this.objectDetected){
                 await this.rejector.reject()
             }
-            this.setIntervalSensorReading(50);
         })
         this.rejection.once("pass", async ()=>{
             serCamLogger.info("An object is passed")
@@ -197,7 +196,6 @@ export default class serCam {
             while(this.objectDetected){
                 await new Promise(resolve => setTimeout(resolve, 50));
             }
-            this.setIntervalSensorReading(50);
             
             
         })

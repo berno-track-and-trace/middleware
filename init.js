@@ -474,11 +474,11 @@ export default class Initialization {
     problematicPeripheral=null;
     this.serCamSensor.setInstantCallback( ()=> {
       // console.log(this, this.print3)
-      this.serCam.objectScanned=true;
+      this.serCam.objectDetected=true;
       this.serCam.scanned();
   })
   this.serCamSensor.setFallingEdgeCallback( () => {
-    this.serCam.objectScanned=false;
+    this.serCam.objectDetected=false;
   })
     initLogger.info("Inisialization has been completed")
   }
