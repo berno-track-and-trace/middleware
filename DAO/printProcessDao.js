@@ -356,10 +356,10 @@ export default class printProcess {
             this.serializationQueue2.clear();
             this.completion = false;
             this.full_code_queue.clear();
-            this.details = null
-            this.details = await this.getCodeDetails(this.db)
+            // this.details = null
+            // this.details = await this.getCodeDetails(this.db)
             if (this.details===null){
-                throw new Error(`no details with assignment Id = ${this.assignment_id}, work order Id =${this.work_order_id} found`)
+                throw new Error(`no details for the job found, please set it first`)
             }
 
             let serialization = await this.getDataBySmallestId(this.db)

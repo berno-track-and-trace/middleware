@@ -33,6 +33,7 @@ export default class serCam {
         this.healthCheckInterval=null;
         this.healthCheckTimeout=null;
         this.sensorReadingInterval=null;
+        this.subsequenceReject = 3;
         // this.setSensorCallBack();
 
         this.chip = new Chip(4);

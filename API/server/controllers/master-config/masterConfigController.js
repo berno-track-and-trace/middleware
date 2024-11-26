@@ -1,3 +1,4 @@
+import printProcess from "../../../../DAO/printProcessDao.js";
 import { printingProcess, printer, serialCamera, rejector, masterConfig} from "../../../../index.js";
 import printerTemplate from "../../../../utils/printerTemplates.js";
 
@@ -108,15 +109,36 @@ const getAllConfigParameters = (req, res) => {
     try {
         const parameters = [
             {
-                parameter_name: "TEMPLATE_NAME",
+                parameter_name: "work_order_id",
+                parameter_value: printingProcess.work_order_id,
+                parameter_unit: 'number'
+            },
+            {
+                parameter_name: "assignment_id",
+                parameter_value: printingProcess.assignment_id,
+                parameter_unit: 'number'
+            },
+            {
+                parameter_name: "template_name",
                 parameter_value: printingProcess.templateName,
+                parameter_unit: "string"
+            },
+            // {
+            //     parameter_name: "rejector_delay",
+            //     parameter_value: rejector.delay,
+            //     parameter_unit: "milliseconds"
+            // },
+            {
+                parameter_name: "accuracy_threshold",
+                parameter_value: serialCamera.accuracyThreshold,
                 parameter_unit: null
             },
             {
-                parameter_name: "REJECTOR_DELAY",
-                parameter_value: rejector.delay,
-                parameter_unit: "ms"
+                parameter_name: "subsequence_reject",
+                parameter_value: serialCamera.subsequenceReject,
+                parameter_unit: 'integer_number'
             }
+            
         ];
         res.status(200).send(parameters);
     } catch (err) {
@@ -127,11 +149,94 @@ const getAllConfigParameters = (req, res) => {
 
 };
 
-const setPrintDetails = async (req, res) =>{
+const setConfig = (req, res) =>{
     try {
-        const details = await this.printingProcess.getCodeDetails(this.printingProcess.db)
-        // checks details here
-        this.printingProcess.details= details;
+        let changes = null
+        if (req.body.template_name){
+            let templateName= req.body.template_name
+            if (typeof templateName === 'string' || templateName instanceof String){
+                changes.push({
+                    variable_name : "template_name",
+                    previous_value: printingProcess.templateName,
+                    current_value: templateName
+                })
+                printingProcess.templateName = templateName;
+            }else{
+                res.status(400).send({message: "template_name must be a string"})
+            }
+        }
+        if (req.body.template_name){
+            let subsequenceReject= req.body.subsequence_reject
+            if (Number.isInteger(subsequenceReject) && subsequenceReject > 0){
+                changes.push({
+                    variable_name : "subsequence_reject",
+                    previous_value: serialCamera.subsequenceReject,
+                    current_value: subsequenceReject
+                })
+                serialCamera.subsequenceReject = subsequenceReject;
+            }else{
+            res.status(400).send({message: "subsequence_reject must be a positive number"})
+            }
+        }
+        if (req.body.accuracy_threshold){
+            let accuracyThreshold= req.body.accuracy_threshold
+            if (Number.isInteger(accuracyThreshold) && accuracyThreshold > 0){
+                changes.push({
+                    variable_name : "accuracy_threshold",
+                    previous_value: serialCamera.accuracyThreshold,
+                    current_value: accuracyThreshold
+                })
+                serialCamera.accuracyThreshold = accuracyThreshold;
+            }else{
+                res.status(400).send({message:"accuracy_threshold must be a positive number"})
+            }
+        }
+        if (changes===null){
+            res.status(400).send({message:"please check the given body, nothing is changed"})
+        }else{
+            res.status(200).send({message: "success", changes: changes})
+        }
+    } catch (error) {
+        res.status(500).send("Internal Error : ", error)
+    }
+}
+
+const setJobDetails = async (req, res) =>{
+    try {
+        if(req.body.work_order_id){
+            this.printingProcess.work_order_id= req.body.work_order_id
+        }else{
+            res.status(400).send({message: "missing body : work_order_id"})
+        }
+        if(req.body.assignment_id){
+            this.printingProcess.assignment_id= req.body.assignment_id
+        }else{
+            res.status(400).send({message: "missing body : assignment_id"})
+        }
+        const details=null;
+        try {
+            details = await this.printingProcess.getCodeDetails(this.printingProcess.db)
+                // checks details here
+            this.printingProcess.details= details;
+            
+            res.status(200).status(details)
+        } catch (error) {
+            res.status(400).send({error: error})
+        }
+        
+       
+        
+    } catch (error) {
+        res.status(500).send({error:error})
+    }
+};
+
+const clearJobDetails = async (req, res) =>{
+    try {
+       
+        this.printingProcess.details= null;
+        this.printingProcess.work_order_id=null;
+        this.printingProcess.assignment_id=null;
         
         res.status(200).status(details)
         
@@ -141,4 +246,5 @@ const setPrintDetails = async (req, res) =>{
 }
 
 
-export default { changeParameter, getConfigParameterByKey, getAllConfigParameters, setPrintDetails};
+
+export default { changeParameter, getConfigParameterByKey, getAllConfigParameters, setConfig, clearJobDetails, setJobDetails};
