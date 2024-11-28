@@ -2,7 +2,7 @@ import pkg from 'node-libgpiod';
 const { version, Chip, Line } = pkg;
 
 export default class LED {
-  constructor(gpioPin) {
+  constructor(gpioPin,) {
     this.chip = new Chip(4);
     this.line = new Line(this.chip, gpioPin);
     this.line.requestOutputMode();
@@ -11,7 +11,8 @@ export default class LED {
     this.blinkInterval = null;
     this.currentInterval = null;
 
-    this.startStateMachine();
+
+    // this.startStateMachine();
   }
 
   startStateMachine() {
@@ -43,6 +44,34 @@ export default class LED {
     }, 50);
   }
 
+  setState(action, blinkingTimes = Infinity) {
+    this.blinkingTimes=blinkingTimes;
+    switch (action) {
+      case 'off':
+        this.stopBlinking();
+        this.line.setValue(1);
+        break;
+      case 'on':
+        this.stopBlinking();
+        this.line.setValue(0);
+        break;
+      case 'blinkSlow':
+        if (this.currentInterval !== 1000) {
+          this.blink(1000);
+        }
+        break;
+      case 'blinkFast':
+        if (this.currentInterval !== 200) {
+          this.blink(200);
+        }
+        break;
+      default:
+        this.stopBlinking();
+        this.line.setValue(0);
+        break;
+    }
+  }
+
   blink(interval) {
     this.stopBlinking();
     
@@ -70,7 +99,7 @@ export default class LED {
     }
   }
 
-  setState(state, blinkingTimes = Infinity) {
+  setState1(state, blinkingTimes = Infinity) {
     if (['off', 'on', 'blinkSlow', 'blinkFast'].includes(state)) {
       this.state = state;
       this.blinkingTimes = blinkingTimes;

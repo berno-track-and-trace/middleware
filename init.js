@@ -420,6 +420,14 @@ export default class Initialization {
       await sleep(retryDelay)
       
     }
+    this.serCam.sensor.setInstantCallback( ()=> {
+        // console.log(this, this.print3)
+        this.printer.boxIsDetected=true;
+        this.serCam.serialization();
+    })
+    this.serCam.sensor.setFallingEdgeCallback(()=> {
+        this.serCam.boxIsDetected=false;
+    })
     needToReInit.removeAllListeners()
     needToReInit.once("pleaseReInit", (...args)=>{
       // console.log("arguments:",args);
