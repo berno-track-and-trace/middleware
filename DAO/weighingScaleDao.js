@@ -106,7 +106,7 @@ async function _readWeight() {
           clearTimeout(timeout);
           const weight = parseFloat(data.trim());
           weighingScaleLogger.info(`Data: ${weight}`);
-          errorOnReading = true;
+          // errorOnReading = true;
 
           if (!isNaN(weight)) {
             readings.push(weight);
@@ -135,7 +135,7 @@ async function _readWeight() {
             port.close(err => {
               if (err) {
                 weighingScaleLogger.lerror('Error closing port: ', err.message);
-
+                
                 return reject(err);
               }
               // console.log('[Weighing Scale] Port closed successfully'); // uncomment for debugging
