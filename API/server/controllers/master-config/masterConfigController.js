@@ -1,5 +1,6 @@
-import printProcess from "../../../../DAO/printProcessDao.js";
+// import printProcess from "../../../../DAO/printProcessDao.js";
 import { printingProcess, printer, serialCamera, rejector, masterConfig} from "../../../../index.js";
+import { apiServerLogger } from "../../../../utils/logger.js";
 import printerTemplate from "../../../../utils/printerTemplates.js";
 
 // const setPrintDetailsReqs = { //TODO : define body checks using joi
@@ -131,7 +132,7 @@ const getAllConfigParameters = (req, res) => {
             {
                 parameter_name: "accuracy_threshold",
                 parameter_value: serialCamera.accuracyThreshold,
-                parameter_unit: null
+                parameter_unit: 'number'
             },
             {
                 parameter_name: "subsequence_reject",
@@ -151,7 +152,7 @@ const getAllConfigParameters = (req, res) => {
 
 const setConfig = (req, res) =>{
     try {
-        let changes = null
+        let changes = []
         if (req.body.template_name){
             let templateName= req.body.template_name
             if (typeof templateName === 'string' || templateName instanceof String){
@@ -197,51 +198,56 @@ const setConfig = (req, res) =>{
             res.status(200).send({message: "success", changes: changes})
         }
     } catch (error) {
-        res.status(500).send("Internal Error : ", error)
+        res.status(500).send(`Internal Error : ${error}`)
+        apiServerLogger.error(error)
     }
 }
 
 const setJobDetails = async (req, res) =>{
     try {
+        // console.log(printingProcess)
         if(req.body.work_order_id){
-            this.printingProcess.work_order_id= req.body.work_order_id
+            printingProcess.work_order_id= req.body.work_order_id
         }else{
             res.status(400).send({message: "missing body : work_order_id"})
         }
         if(req.body.assignment_id){
-            this.printingProcess.assignment_id= req.body.assignment_id
+            printingProcess.assignment_id= req.body.assignment_id
         }else{
             res.status(400).send({message: "missing body : assignment_id"})
         }
-        const details=null;
+        let details=null;
         try {
-            details = await this.printingProcess.getCodeDetails(this.printingProcess.db)
+            details = await printingProcess.getCodeDetails(printingProcess.db)
                 // checks details here
-            this.printingProcess.details= details;
+            printingProcess.details= details;
             
             res.status(200).status(details)
         } catch (error) {
             res.status(400).send({error: error})
+            console.log(error)
         }
         
        
         
     } catch (error) {
         res.status(500).send({error:error})
+        apiServerLogger.error(error)
+        
     }
 };
 
 const clearJobDetails = async (req, res) =>{
     try {
        
-        this.printingProcess.details= null;
-        this.printingProcess.work_order_id=null;
-        this.printingProcess.assignment_id=null;
+        printingProcess.details= null;
+        printingProcess.work_order_id=null;
+        printingProcess.assignment_id=null;
         
-        res.status(200).status(details)
+        res.status(200).send({message:'Job detail successfully cleared'})
         
     } catch (error) {
-        res.status(400).send({error:error})
+        res.status(500).send({error:error})
     }
 }
 

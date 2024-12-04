@@ -46,12 +46,15 @@ export default class Initialization {
     initLogger.info(`${peripheral} is commiting a re-initialization. Reason : ${reason}` )
     problematicPeripheral =peripheral;
     try {
-
       const json = {
         "request_id": crypto.randomUUID(),
-        "ERROR_CODE": peripheral.toUpperCase(),
-        "MESSAGE": reason
-      }
+        "case":"MIDDLEWARE_HEALTH_CHECK",
+        "action": "HEALTH_CHECKING",
+        "message_code": peripheral,
+        "message_type": "ERROR",
+        "message": reason,
+        
+        }
       const str = JSON.stringify(json)
       this.backEndWS.sendMessage(str)
       initLogger.info({
@@ -342,7 +345,7 @@ export default class Initialization {
             }
             this.backEndWS.ws.on('message', (message)=>{
               const str = message.toString()
-              beWsLogger.info("Incoming HealthCheck from BE :", str)
+              beWsLogger.info(`Incoming HealthCheck from BE :${str}`)
               try{
                 this.backEndWS.sendMessage(str)
               }catch(err){

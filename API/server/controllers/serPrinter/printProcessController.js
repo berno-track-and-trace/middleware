@@ -62,31 +62,31 @@ const startPrinting = async (req, res) => {
       if (problematicPeripheral){
         throw new Error (`${problematicPeripheral} is not ready`)
       }
-      if(req.body.threshold ){
-          if(typeof req.body.threshold  !== 'number' || isNaN(req.body.threshold)){
-              throw new Error ("threshold value must be a number")
+      // if(req.body.threshold ){
+      //     if(typeof req.body.threshold  !== 'number' || isNaN(req.body.threshold)){
+      //         throw new Error ("threshold value must be a number")
           
-      }else{
-          serialCamera.accuracyThreshold=req.body.threshold
-      }
-      }
-      if (!serialCamera.accuracyThreshold)
-      // if(req.body.work_order_id){
-      //     printingProcess.work_order_id = req.body.work_order_id
-      // }else{missingBody="work_order_id"}
-      if(printingProcess.work_order_id){missingBody="work_order_id"}
-      if(req.body.assignment_id){
-          printingProcess.assignment_id = req.body.assignment_id
-      }else{missingBody=missingBody+" and assignment_id"}
+      // }else{
+      //     serialCamera.accuracyThreshold=req.body.threshold
+      // }
+      // }
+      // if (!serialCamera.accuracyThreshold)
+      // // if(req.body.work_order_id){
+      // //     printingProcess.work_order_id = req.body.work_order_id
+      // // }else{missingBody="work_order_id"}
+      // if(printingProcess.work_order_id){missingBody="work_order_id"}
+      // if(req.body.assignment_id){
+      //     printingProcess.assignment_id = req.body.assignment_id
+      // }else{missingBody=missingBody+" and assignment_id"}
   
-      if (missingBody!=""){
-          // return res.status(400).send({message: `Missing mandatory payload in request body. (${missingBody})`})
-          return res.status(400).send({message: `Please set the ${missingBody} first!`})
-      }
+      // if (missingBody!=""){
+      //     // return res.status(400).send({message: `Missing mandatory payload in request body. (${missingBody})`})
+      //     return res.status(400).send({message: `Please set the ${missingBody} first!`})
+      // }
   
-      if((req.body.templateName) && req.body.templateName  in printerTemplate){
-          return res.status(404).send({message: `The template Name=${req.body.templateName} does not exist`})
-      }
+      // if((req.body.templateName) && req.body.templateName  in printerTemplate){
+      //     return res.status(404).send({message: `The template Name=${req.body.templateName} does not exist`})
+      // }
       if (printer.isOccupied===true){
           return res.status(409).send({message: `This printer is occupied for workOrderId=${printingProcess.work_order_id} and assignmentId =${printingProcess.assignment_id}`})
       }

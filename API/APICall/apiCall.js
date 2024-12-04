@@ -173,7 +173,7 @@ export async function postDataToAPI(route, data) {
     const response = await axios.post(process.env.API_URL + route, data,
       {
         headers: {
-          'X-AUTH-BASIC': 'Basic c2VyYXRvbmljOjUzcjR0MG4xYw=='
+          'X-AUTH-BASIC': process.env.BE_AUTH
         }
       })
     normalProcessFlag = true;
@@ -198,7 +198,7 @@ export async function putDataToAPI(route, data) {
     const response = await axios.put(process.env.API_URL + route, data,
       {
         headers: {
-          'X-AUTH-BASIC': 'Basic c2VyYXRvbmljOjUzcjR0MG4xYw=='
+          'X-AUTH-BASIC': process.env.BE_AUTH
         }
       })
     normalProcessFlag = true;
@@ -223,7 +223,13 @@ export async function getDataToAPI(route, data = null) {
 
   try {
     clearInterval(hcInterval)
-    const response = await axios.get(url)
+    const response = await axios.get(url,data,
+      {
+        headers: {
+          'X-AUTH-BASIC': process.env.BE_AUTH
+        }
+      }
+    )
     normalProcessFlag = true;
     setHCInterval();
     const jsonRes = {

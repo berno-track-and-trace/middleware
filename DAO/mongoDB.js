@@ -28,7 +28,7 @@ export default class MongoDB {
             
             this.healthCheckInterval = setInterval(async ()=>{
                 let timeout = setTimeout(()=>{
-                    needToReInit.emit("pleaseReInit", "MongoDB")
+                    needToReInit.emit("pleaseReInit", "ERR_MONGODB", "Timeout on healthcheck's response")
                     mongoDBLogger.error("waiting for health check response is timed out")
                 }, 1000)
                 const serverStatus =  await this.client.db('admin').command({ serverStatus: 1 }); // only for health check, checking if the collection is exist
@@ -39,7 +39,7 @@ export default class MongoDB {
             this.normalOperationFlag=false;
             
         } catch (error) {//TODO: add clearTimeout(timeout);
-            needToReInit.emit("pleaseReInit", "MongoDB")
+            needToReInit.emit("pleaseReInit", "ERR_MONGODB", error)
             mongoDBLogger.error(`health check error : ${error}`)
             this.normalOperationFlag=false;
         }

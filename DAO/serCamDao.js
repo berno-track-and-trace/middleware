@@ -10,11 +10,13 @@ import {serCamLogger} from '../utils/logger.js'
 const { version, Chip, Line } = pkg;
 // import { eventNames } from 'process';
 import { clear } from 'console';
+
 function removeSpacesAndNewlines(inputString) {
     return inputString.replace(/\s+/g, '');
 }
 let normalOperationFlag = false; //normal operation flag for healthcheck
 let printedTimeOutFlag = false;
+let waitingForResponseFlag = false;
 
 
 export default class serCam {
@@ -72,7 +74,7 @@ export default class serCam {
                     await new Promise(resolve => setTimeout(resolve, 5000));
                     if (currentPrintSignalCount<this.printedTimeOutQueue.size()){
                         serCamLogger.error("[SerCam] The camera sensor might be disconnected from GPIO, please check the connection")
-                        // needToReInit.emit("pleaseReInit", "serCam", "sensor might be disconnected to GPIO", true); 
+                        // needToReInit.emit("pleaseReInit", "ERR_SERIALIZATION_CAM", "sensor might be disconnected to GPIO", true); 
                     }else{
                         serCamLogger.warn("[SerCam] The camera sensor might be disconnected from GPIO or the conveyor is not running")
                     }
@@ -181,18 +183,22 @@ async serialization(){
             }, 242)
 
             this.rejection.once("reject", async ()=>{
-                
+                this.rejectCounter++;
                 await this.rejector.reject()
 
                 this.rejection.removeAllListeners()
                 while(this.boxIsDetected===true){
                     await this.rejector.reject()
                 }
+                if(this.rejectCounter>=this.subsequenceReject){
+                    needToReInit.emit("pleaseReInit", "serCam", "max subsequence reject is reached");
+                    this.rejectCounter=0;
+                }
 
             })
             this.rejection.once("pass", async ()=>{
                 serCamLogger.info("An object is passed")
-
+                this.rejectCounter = 0;
                 this.rejection.removeAllListeners()
                 while(this.boxIsDetected===true){
                     await new Promise(resolve => setTimeout(resolve, 50));
@@ -210,7 +216,7 @@ async serialization(){
                     this.socket.write(message, 'utf8');  // Sending as UTF-8 encoded string
                     this.healthCheckTimeout = setTimeout(()=>{
                     this.running = false;
-                    needToReInit.emit("pleaseReInit", "serCam", "timed out occured on health check"); // ask to re-init
+                    needToReInit.emit("pleaseReInit", "ERR_SERIALIZATION_CAM", "timed out occured on health check"); // ask to re-init
                     serCamLogger.error("timed out occured on health check")
                     },500);
                 }
@@ -307,16 +313,20 @@ async serialization(){
                     }else{
 
                         serCamLogger.error(`[Ser Cam] Camera error code found : ${responseString[2]}`)
-                        needToReInit.emit("pleaseReInit", "serCam", "Camera error code found");
+                        needToReInit.emit("pleaseReInit", "ERR_SERIALIZATION_CAM", "Camera error code found");
                     }
                 }
                 else{
 
                     
                     normalOperationFlag=true;
-                    responseString = this.separateStringToObject(responseString)
+                    if (waitingForResponseFlag){
+                        responseString = this.separateStringToObject(responseString)
+                        const data = this.receiveData(responseString)
+                    }else{
+                        serCamLogger.info("got the data but, already rejected by timeout")
+                    }
                     
-                    const data = this.receiveData(responseString)
                 }
                 
             }
@@ -326,13 +336,13 @@ async serialization(){
 
         this.socket.on('error', (err) => {
             clearInterval(this.healthCheckInterval);
-            needToReInit.emit("pleaseReInit", "serCam", "Error listening for responses");
+            needToReInit.emit("pleaseReInit", "ERR_SERIALIZATION_CAM", "Error listening for responses");
             serCamLogger.error(`Error listening for responses: ${err}`);
         });
 
         this.socket.on('close', () => {
             clearInterval(this.healthCheckInterval);
-            needToReInit.emit("pleaseReInit", "serCam")
+            needToReInit.emit("pleaseReInit", "ERR_SERIALIZATION_CAM","serialization Camera TCP Listener is stopped" )
             serCamLogger.info("[Ser Cam] Listening stopped");
             this.running = false;
         });
@@ -393,6 +403,7 @@ async serialization(){
                 serCamLogger.info("emit pass")
 
             }
+            
             await postDataToAPI(`v1/work-order/${printingProcess.work_order_id}/assignment/${printingProcess.assignment_id}/serialization/validate`,{ 
                 accuracy:isNaN(data.accuracy)?0:data.accuracy,
                 status:check.result?"passed":"rejected",
@@ -411,7 +422,7 @@ async serialization(){
         if (add){
             this.rejectCounter++;
             if(this.rejectCounter>=this.subsequenceReject){
-                needToReInit.emit("pleaseReInit", "serCam", `${this.subsequenceReject} Consequtive Rejects`, false); 
+                needToReInit.emit("pleaseReInit", "ERR_SERIALIZATION_CAM", `${this.subsequenceReject} Consequtive Rejects`); 
             }
         }else{
             this.rejectCounter=0;

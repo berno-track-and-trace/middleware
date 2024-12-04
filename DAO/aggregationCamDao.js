@@ -58,14 +58,14 @@ class AggregationCam {
         aggCamLogger.info("perfoming normal healthcheck")
         const status = await this.getStatus()
         if (status!='Ok'){
-          needToReInit.emit("pleaseReInit", "aggCam", "AggCam is not ok")
+          needToReInit.emit("pleaseReInit", "ERR_AGGREGATION_CAM", "problem occured on Aggregation Camera ")
           // await this.pingIP()
           clearInterval(this.hcInterval)
         }else{
           aggCamLogger.info("aggCam is ok")
         }}
        catch (error) {
-        needToReInit.emit("pleaseReInit", "aggCamWS", error)
+        needToReInit.emit("pleaseReInit", "ERR_AGGREGATION_CAM", `problem occured on Aggregation Camera WebSocket${error}`)
         aggCamLogger.error(`Got error on normal healthcheck : ${error}`)
         clearInterval(this.hcInterval)
         this.normalOperationFlag=false;

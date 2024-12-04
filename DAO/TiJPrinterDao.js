@@ -101,7 +101,7 @@ export default class TIJPrinter {
                                 'printerBufferCount':bufferCount,
                                 'localBufferCount':this.localBufferCount
                             })
-                            // rejectorCheck=true;
+                            // rejectorCheck=true; // TODO try to uncomment it and test
                             rejectorCheck=false;
                             printerLogger.error("Middleware possibly can't get signal from printer sensor")
                         }
@@ -110,7 +110,7 @@ export default class TIJPrinter {
                         }
                     }
                 }).catch(error => {
-                    needToReInit.emit("pleaseReInit", "Printer",error, rejectorCheck)
+                    needToReInit.emit("pleaseReInit", "ERR_PRINTER",error, rejectorCheck)
                     this.disconnect();
                     clearInterval(this.healthCheckInterval)
                     printerLogger.error(`[Printer] printer is not healthy : ${error}` )
@@ -181,13 +181,13 @@ export default class TIJPrinter {
             printerLogger.error(`Error listening for responses: ${err}`);
             clearInterval(this.healthCheckInterval)
             this.running = false;
-            needToReInit.emit("pleaseReInit", "Printer",err)
+            needToReInit.emit("pleaseReInit", "ERR_PRINTER",err)
         });
 
         this.socket.on('close', () => {
             printerLogger.info("Listening stopped");
             clearInterval(this.healthCheckInterval)
-            needToReInit.emit("pleaseReInit", "Printer", 'socket is closed')
+            needToReInit.emit("pleaseReInit", "ERR_PRINTER", 'Printer TCP socket is closed')
             this.running = false;
         });
     }
@@ -234,7 +234,7 @@ export default class TIJPrinter {
                     printerLogger.error("Too many times has no responses from printer")
                     this.running = false;
                     clearInterval(this.healthCheckInterval)
-                    needToReInit.emit("pleaseReInit", "Printer", "Too many times has no responses from printer")
+                    needToReInit.emit("pleaseReInit", "ERR_PRINTER", "no responses are occured for too many from printer")
                     this.noResponseCount = 0;
                 }
 

@@ -303,7 +303,7 @@ export default class printProcess {
         try {
             let timeout = setTimeout(()=>{
                 mongoDBLogger.error("timed out occured while trying to do health check manually")
-                needToReInit.emit("pleaseReInit","MongoDB", "timed out occured while trying to do health check manually")
+                needToReInit.emit("pleaseReInit","ERR_MONGODB", "timed out on normal healthcheck")
                 this.printer.isOccupied=false;
             }, 1000)
             const serverStatus =  await this.client.db('admin').command({ serverStatus: 1 }); // only for health check, checking if the collection is exist
@@ -460,7 +460,7 @@ export default class printProcess {
             });
           });
           this.printer.stopPrint();
-          needToReInit.emit("pleaseReInit", "Printing Process", reason)
+          needToReInit.emit("pleaseReInit", "ERR_PRINTING_PROCESS", reason)
           this.printer.isOccupied=false;
           
     }
@@ -589,7 +589,7 @@ export default class printProcess {
                             printPLogger.warn("Error upon pushing data to buffer previously, and the previous code was NOT entered")
                         }
                     } catch (error) {
-                        needToReInit.emit("pleaseReInit","Printing Process", error)
+                        needToReInit.emit("pleaseReInit","ERR_PRINTING_PROCESS", error)
                     }
                 }
             
