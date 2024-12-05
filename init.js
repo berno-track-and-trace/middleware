@@ -29,6 +29,7 @@ export default class Initialization {
     this.backEndWS = backEndWS,
     this.reRunning = false;
     this.firstRun=false;
+    this.bootUp= true;
     this.state = {
       connectingToDB:false,
       connectingToWS:false,
@@ -435,8 +436,59 @@ export default class Initialization {
     needToReInit.once("pleaseReInit", (...args)=>{
       // console.log("arguments:",args);
       this.reRun(...args)})
+    // if(this.firstRun){
+    console.log("registered bro")
+  // }
     problematicPeripheral=null;
+    if(this.bootUp){this.setSubsequenceEvent()}
     initLogger.info("Inisialization has been completed")
   }
-
+  setSubsequenceEvent(){
+    this.bootUp=false
+    needToReInit.on("subsequenceReject", () =>{
+        
+      try{
+        const json = {
+          "request_id": crypto.randomUUID(),
+          "case":"MIDDLEWARE_HEALTH_CHECK",
+          "action": "HEALTH_CHECKING",
+          "message_code": "ERR_SUBSEQUENCE_ERROR_REACHED",
+          "message_type": "ERROR",
+          "message": "reason",
+          
+          }
+        const str = JSON.stringify(json)
+        
+        this.backEndWS.sendMessage(str)
+      }catch(err){
+        beWsLogger.error(err)
+      }
+      
+      initLogger.info("Subsequence Rejects reached, performing printer sensor cut off")
+      fs.open(pipePath, 'w', (err, fd) => {
+        if (err) {
+          initLogger.error('Failed to open named pipe:', err);
+          return;
+        }
+      
+        fs.write(fd, 'off', (err) => {
+          if (err) {
+            initLogger.error('Failed to write to named pipe:', err);
+          } else {
+            initLogger.info('Message sent to pipe: off');
+          }
+      
+          fs.close(fd, (err) => {
+            if (err) {
+              initLogger.error('Failed to close named pipe:', err);
+            }
+          });
+        });
+      });
+  
+    })
+  
+  }
 }
+
+

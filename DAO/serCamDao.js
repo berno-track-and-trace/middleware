@@ -7,6 +7,7 @@ import pkg from 'node-libgpiod';
 import Queue from '../utils/queue.js';
 import {serCamLogger} from '../utils/logger.js'
 
+
 const { version, Chip, Line } = pkg;
 // import { eventNames } from 'process';
 import { clear } from 'console';
@@ -162,6 +163,7 @@ async serialization(){
                 printed = this.printedTimeOutQueue.dequeue();
                 clearTimeout(printed.timeOut)
             }
+            waitingForResponseFlag=true;
             this.rejectTimeOut = setTimeout( async ()=>{
                 serCamLogger.error("Time out occured while waiting data from camera")
                 await this.rejector.reject(0)
@@ -178,6 +180,7 @@ async serialization(){
                 while(this.boxIsDetected===true){ // avoid repeat process for the same object
                     await this.rejector.reject(242)
                     this.rejectCounter++;
+                
                 }
                 this.rejection.removeAllListeners()
             }, 242)
@@ -190,8 +193,9 @@ async serialization(){
                 while(this.boxIsDetected===true){
                     await this.rejector.reject()
                 }
+                console.log("reject counts", this.rejectCounter)
                 if(this.rejectCounter>=this.subsequenceReject){
-                    needToReInit.emit("pleaseReInit", "serCam", "max subsequence reject is reached");
+                    needToReInit.emit("subsequenceReject");
                     this.rejectCounter=0;
                 }
 
@@ -313,7 +317,8 @@ async serialization(){
                     }else{
 
                         serCamLogger.error(`[Ser Cam] Camera error code found : ${responseString[2]}`)
-                        needToReInit.emit("pleaseReInit", "ERR_SERIALIZATION_CAM", "Camera error code found");
+                        // needToReInit.emit("pleaseReInit", "ERR_SUBSEQUENCE_ERROR_REACHED", "Camera error code found");
+
                     }
                 }
                 else{
@@ -321,7 +326,9 @@ async serialization(){
                     
                     normalOperationFlag=true;
                     if (waitingForResponseFlag){
+                        waitingForResponseFlag=false
                         responseString = this.separateStringToObject(responseString)
+                        
                         const data = this.receiveData(responseString)
                     }else{
                         serCamLogger.info("got the data but, already rejected by timeout")
