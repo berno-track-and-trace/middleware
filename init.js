@@ -3,7 +3,7 @@ import { getDataToAPI } from "./API/APICall/apiCall.js";
 import { HttpStatusCode } from "axios";
 import fs from 'fs';
 import {Mutex} from 'async-mutex'
-import { needToReInit } from "./utils/globalEventEmitter.js";
+import { needToReInit, subsequenceReject } from "./utils/globalEventEmitter.js";
 import * as child from 'node:child_process'
 import crypto from "crypto"
 import { initLogger, beWsLogger } from "./utils/logger.js";
@@ -445,7 +445,7 @@ export default class Initialization {
   }
   setSubsequenceEvent(){
     this.bootUp=false
-    needToReInit.on("subsequenceReject", () =>{
+    subsequenceReject.on("subsequenceReject", () =>{
         
       try{
         const json = {
@@ -463,7 +463,7 @@ export default class Initialization {
       }catch(err){
         beWsLogger.error(err)
       }
-      
+      this.printer.isOccupied=false;
       initLogger.info("Subsequence Rejects reached, performing printer sensor cut off")
       fs.open(pipePath, 'w', (err, fd) => {
         if (err) {

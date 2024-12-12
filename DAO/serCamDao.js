@@ -1,11 +1,12 @@
 import net from 'net';
 import {postDataToAPI} from '../API/APICall/apiCall.js'
 import { printingProcess } from '../index.js';
-import { needToReInit, printingScanning } from '../utils/globalEventEmitter.js';
+import { needToReInit, printingScanning , subsequenceReject} from '../utils/globalEventEmitter.js';
 import { EventEmitter } from 'events';
 import pkg from 'node-libgpiod';
 import Queue from '../utils/queue.js';
 import {serCamLogger} from '../utils/logger.js'
+
 
 
 const { version, Chip, Line } = pkg;
@@ -60,6 +61,8 @@ export default class serCam {
         this.boxIsDetected= false;
 
         this.rejectCounter = 0;
+
+        this.sensorToRejTravelTime= 270 // berno 242
 
     }
     addPrintedTimeOut(printedData){ // for detecting failure on conection between camera trigger sensor and GPIO
@@ -121,11 +124,11 @@ export default class serCam {
     //                     event_time:Date.now()
     //                 }) 
     //                 while(this.line.getValue===1){
-    //                     await this.rejector.reject(242)
+    //                     await this.rejector.reject(this.sensorToRejTravelTime)
     //                 }
     //                 this.rejection.removeAllListeners()
     //                 this.setIntervalSensorReading(50);
-    //             }, 242)
+    //             }, this.sensorToRejTravelTime)
 
     //             this.rejection.once("reject", async ()=>{
                     
@@ -178,15 +181,18 @@ async serialization(){
                     event_time:Date.now()
                 }) 
                 while(this.boxIsDetected===true){ // avoid repeat process for the same object
-                    await this.rejector.reject(242)
+                    await this.rejector.reject(this.sensorToRejTravelTime)
                     this.rejectCounter++;
                 
                 }
                 this.rejection.removeAllListeners()
-            }, 242)
+            }, this.sensorToRejTravelTime)
 
             this.rejection.once("reject", async ()=>{
-                this.rejectCounter++;
+                if (printingProcess.printer.isOccupied){
+                    this.rejectCounter++;
+                }
+                
                 await this.rejector.reject()
 
                 this.rejection.removeAllListeners()
@@ -195,7 +201,8 @@ async serialization(){
                 }
                 console.log("reject counts", this.rejectCounter)
                 if(this.rejectCounter>=this.subsequenceReject){
-                    needToReInit.emit("subsequenceReject");
+                    subsequenceReject.emit("subsequenceReject");
+                    serCamLogger.info("subsequenceReject emitted")
                     this.rejectCounter=0;
                 }
 
@@ -425,16 +432,16 @@ async serialization(){
         }
     }
 
-    consequtiveRejectHandler(add){ // true= count, false =reset
-        if (add){
-            this.rejectCounter++;
-            if(this.rejectCounter>=this.subsequenceReject){
-                needToReInit.emit("pleaseReInit", "ERR_SERIALIZATION_CAM", `${this.subsequenceReject} Consequtive Rejects`); 
-            }
-        }else{
-            this.rejectCounter=0;
-        }
-    }
+    // consequtiveRejectHandler(add){ // true= count, false =reset //TODO : remove
+    //     if (add){
+    //         this.rejectCounter++;
+    //         if(this.rejectCounter>=this.subsequenceReject){
+    //             needToReInit.emit("pleaseReInit", "ERR_SERIALIZATION_CAM", `${this.subsequenceReject} Consequtive Rejects`); 
+    //         }
+    //     }else{
+    //         this.rejectCounter=0;
+    //     }
+    // }
         
 }
 

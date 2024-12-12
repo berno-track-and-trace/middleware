@@ -39,7 +39,7 @@ import { masterConfig } from '../index.js';
 import { clearInterval } from 'timers';
 import { clear, time } from 'console';
 import { needToReInit, printingScanning } from '../utils/globalEventEmitter.js';
-import {printPLogger, mongoDBLogger} from '../utils/logger.js'
+import {printPLogger, mongoDBLogger, printerLogger} from '../utils/logger.js'
 // import { emit } from 'process';
 export default class printProcess {
     constructor(printer, mongoDB, sensor) {
@@ -539,7 +539,7 @@ export default class printProcess {
                             this.full_code_queue.enqueue(serialization.full_code)
                             const updateResult = await this.updateStatus(this.db, serialization.id);
                             if (updateResult.status === 'success') {
-                                printPLogger.info(`SN :${serialization.SN} updated to be PRINTED successfully on DB.`);
+                                printPLogger.info(`SN :${serialization.SN} updated to be PRINTING successfully on DB.`);
                             } else if (updateResult.status === 'not_found') {
                                 printPLogger.error(`Document id ${serialization.id} is not found, no status update performed.`);
                                 this.abort(`Document id ${serialization.id} is not found, no status update performed.`);
@@ -628,7 +628,8 @@ export default class printProcess {
                     await this.printer.clearBuffers()
                     await putDataToAPI(`v1/work-order/${this.work_order_id}/assignment/${this.assignment_id}/serialization/printed`,{ 
                         full_code:printed,
-                    }) 
+                    })
+                    printerLogger.info(`Printed : `, printed)
                     this.printer.isOccupied=false
                     printPLogger.info(`Printing process with assignment Id = ${this.assignment_id}, work order Id =${this.work_order_id} is completed! $`)
                     
@@ -641,7 +642,7 @@ export default class printProcess {
                 }
                
             } catch (error) {
-                printPLogger.error(`Error on update to API : ${error}`)
+                printPLogger.error(`Error upon updating to API : ${error}`)
             }
             
         }

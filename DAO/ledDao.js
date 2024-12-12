@@ -2,7 +2,7 @@ import pkg from 'node-libgpiod';
 const { version, Chip, Line } = pkg;
 
 export default class LED {
-  constructor(gpioPin,) {
+  constructor(gpioPin) {
     this.chip = new Chip(4);
     this.line = new Line(this.chip, gpioPin);
     this.line.requestOutputMode();
@@ -99,18 +99,18 @@ export default class LED {
     }
   }
 
-  setState1(state, blinkingTimes = Infinity) {
-    if (['off', 'on', 'blinkSlow', 'blinkFast'].includes(state)) {
-      this.state = state;
-      this.blinkingTimes = blinkingTimes;
-      // console.log(this.blinkingTimes)
-      if (state !== 'blinkSlow' && state !== 'blinkFast') {
-        this.stopBlinking();
-      }
-    } else {
-      console.error(`Invalid state: ${state}`);
-    }
-  }
+  // setState1(state, blinkingTimes = Infinity) { // aris asked to be removed
+  //   if (['off', 'on', 'blinkSlow', 'blinkFast'].includes(state)) {
+  //     this.state = state;
+  //     this.blinkingTimes = blinkingTimes;
+  //     // console.log(this.blinkingTimes)
+  //     if (state !== 'blinkSlow' && state !== 'blinkFast') {
+  //       this.stopBlinking();
+  //     }
+  //   } else {
+  //     console.error(`Invalid state: ${state}`);
+  //   }
+  // }
 
   cleanup() {
     this.stopBlinking();
