@@ -158,6 +158,7 @@ export default class serCam {
     // }
 
 async serialization(){
+            console.log("start counter...")
             console.time("serDataTime")
             clearTimeout(this.rejectTimeOut)
             this.rejection.removeAllListeners()

@@ -41,7 +41,7 @@ const createLogger = (peripheral) => {
 
   return winston.createLogger({
     level: process.env.LOG_LEVEL || 'info',
-    silent:true,
+    // silent:true,
     transports,
   });
 };
