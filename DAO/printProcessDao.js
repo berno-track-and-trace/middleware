@@ -604,6 +604,7 @@ export default class printProcess {
                         // console.log("[printing process] waiting a box to be completely printed...")
                         await new Promise(resolve => setTimeout(resolve, 100)) // waiting for the last box to be completely printed
                     }
+                    await new Promise(resolve => setTimeout(resolve, 100))
                     printPLogger.info("printing is completed")
                     fs.open(pipePath, 'w', (err, fd) => {
                         if (err) {

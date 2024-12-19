@@ -134,7 +134,7 @@ async function _readWeight() {
 
             port.close(err => {
               if (err) {
-                weighingScaleLogger.lerror('Error closing port: ', err.message);
+                weighingScaleLogger.error('Error closing port: ', err.message);
                 
                 return reject(err);
               }
