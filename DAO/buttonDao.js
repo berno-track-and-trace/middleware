@@ -14,12 +14,13 @@ export default class Button {
     this.longPressCallback = null;
     this.instantCallback = null;
     this.fallingEdgeCallback = null;
+    this.pollingInterval=30;
     
 
     this.line.requestInputMode();  // Ensure the line is in input mode
     this.lastButtonState = this.line.getValue();
 
-    setInterval(this.checkButton.bind(this), 50); // Polling interval
+    setInterval(this.checkButton.bind(this), this.pollingInterval); // Polling interval
   }
 
   checkButton() {

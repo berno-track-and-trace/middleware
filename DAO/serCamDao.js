@@ -95,71 +95,14 @@ export default class serCam {
       }, 5000),
     });
   }
-  // setIntervalSensorReading(timeInterval){
-  //     this.sensorReadingInterval = setInterval(()=>{
-  //         if(this.line.getValue()===1){
-
-  //             clearTimeout(this.rejectTimeOut)
-  //             clearInterval(this.sensorReadingInterval)
-  //             this.rejection.removeAllListeners()
-  //             serCamLogger.info("Sensor is triggered")
-  //             let printed=null;
-  //             if(!this.printedTimeOutQueue.isEmpty()){
-  //                 printed = this.printedTimeOutQueue.dequeue();
-  //                 clearTimeout(printed.timeOut)
-  //             }
-  //             this.rejectTimeOut = setTimeout( async ()=>{
-  //                 serCamLogger.error("Time out occured while waiting data from camera")
-
-  //                 await this.rejector.reject(0)
-  //                 while(this.line.getValue===1){
-  //                     await this.rejector.reject(0)
-  //                 }
-  //                 await postDataToAPI(`v1/work-order/${printingProcess.work_order_id}/assignment/${printingProcess.assignment_id}/serialization/validate`,{
-  //                     accuracy:0,
-  //                     status:"rejected",
-  //                     code:null,
-  //                     reason:"CAM_ERROR",
-  //                     event_time:Date.now()
-  //                 })
-  //                 while(this.line.getValue===1){
-  //                     await this.rejector.reject(this.sensorToRejectTravelTime)
-  //                 }
-  //                 this.rejection.removeAllListeners()
-  //                 this.setIntervalSensorReading(50);
-  //             }, this.sensorToRejectTravelTime)
-
-  //             this.rejection.once("reject", async ()=>{
-
-  //                 await this.rejector.reject()
-
-  //                 this.rejection.removeAllListeners()
-  //                 while(this.line.getValue()===1){
-  //                     await this.rejector.reject()
-  //                 }
-  //                 this.setIntervalSensorReading(50);
-  //             })
-  //             this.rejection.once("pass", async ()=>{
-  //                 serCamLogger.info("An object is passed")
-
-  //                 this.rejection.removeAllListeners()
-  //                 while(this.line.getValue()===1){
-  //                     await new Promise(resolve => setTimeout(resolve, 50));
-  //                 }
-  //                 this.setIntervalSensorReading(50);
-
-  //             })
-  //         }
-
-  //     },timeInterval)
-  // }
 
   async serialization() {
     console.log('start counter...');
-    console.time('serDataTime');
+    // console.time('serDataTime');
     clearTimeout(this.rejectTimeOut);
     this.rejection.removeAllListeners();
     serCamLogger.info('Sensor is triggered');
+
     let printed = null;
     if (!this.printedTimeOutQueue.isEmpty()) {
       printed = this.printedTimeOutQueue.dequeue();
@@ -173,9 +116,9 @@ export default class serCam {
         this.rejectCounter++;
       }
 
-      await this.rejector.reject(0);
+      this.rejector.reject(0);
       while (this.boxIsDetected === true) {
-        await this.rejector.reject(0);
+        this.rejector.reject(0);
       }
 
       postDataToAPI(
@@ -203,7 +146,7 @@ export default class serCam {
         this.rejectCounter++;
       }
 
-      await this.rejector.reject();
+      this.rejector.reject();
 
       this.rejection.removeAllListeners();
       //   while (this.boxIsDetected === true) {
@@ -229,31 +172,31 @@ export default class serCam {
   }
 
   async setHealthCheckInterval() {
-    this.healthCheckInterval = setInterval(
-      () => {
-        try {
-          if (this.socket) {
-            const message = 'ERRSTAT\r'; // sendinf command ERRSTAT
-            this.socket.write(message, 'utf8'); // Sending as UTF-8 encoded string
-            this.healthCheckTimeout = setTimeout(() => {
-              this.running = false;
-              needToReInit.emit(
-                'pleaseReInit',
-                'ERR_SERIALIZATION_CAM',
-                'timed out occured on health check'
-              ); // ask to re-init
-              serCamLogger.error('timed out occured on health check');
-            }, 500);
-          }
-        } catch (error) {
-          serCamLogger.error(`Healthcheck error : ${err}`);
-        }
-      },
-      normalOperationFlag
-        ? this.hcTimeInterval + this.hcTimeTolerance
-        : this.hcTimeInterval
-    );
-    normalOperationFlag = false;
+    // this.healthCheckInterval = setInterval(
+    //   () => {
+    //     try {
+    //       if (this.socket) {
+    //         const message = 'ERRSTAT\r'; // sendinf command ERRSTAT
+    //         // this.socket.write(message, 'utf8'); // Sending as UTF-8 encoded string
+    //         // this.healthCheckTimeout = setTimeout(() => {
+    //         //   this.running = false;
+    //         //   needToReInit.emit(
+    //         //     'pleaseReInit',
+    //         //     'ERR_SERIALIZATION_CAM',
+    //         //     'timed out occured on health check'
+    //         //   ); // ask to re-init
+    //         //   serCamLogger.error('timed out occured on health check');
+    //         // }, 500);
+    //       }
+    //     } catch (error) {
+    //       serCamLogger.error(`Healthcheck error : ${err}`);
+    //     }
+    //   },
+    //   normalOperationFlag
+    //     ? this.hcTimeInterval + this.hcTimeTolerance
+    //     : this.hcTimeInterval
+    // );
+    // normalOperationFlag = false;
   }
   connect() {
     return new Promise((resolve, reject) => {
@@ -323,34 +266,40 @@ export default class serCam {
 
       clearTimeout(this.rejectTimeOut);
       clearInterval(this.healthCheckInterval);
-      // let printed=null;
-      if (response) {
-        let responseString = response.toString('utf8');
-        if (responseString.startsWith('OK,ERRSTAT,')) {
-          clearTimeout(this.healthCheckTimeout);
-          responseString = responseString.split(',');
-          if (removeSpacesAndNewlines(responseString[2]) === 'none') {
-            // console.log("[Ser Cam] Status is ok")
-          } else {
-            serCamLogger.error(
-              `[Ser Cam] Camera error code found : ${responseString[2]}`
-            );
-            // needToReInit.emit("pleaseReInit", "ERR_SUBSEQUENCE_ERROR_REACHED", "Camera error code found");
-          }
-        } else {
-          normalOperationFlag = true;
-          if (waitingForResponseFlag) {
-            waitingForResponseFlag = false;
-            console.timeEnd('serDataTime');
-            responseString = this.separateStringToObject(responseString);
 
-            const data = this.receiveData(responseString);
-          } else {
-            serCamLogger.info(
-              `got the data but already rejected due to timeout (code: ${responseString})`
-            );
-          }
+      if (!response) {
+        return;
+      }
+
+      let responseString = response.toString('utf8');
+      const isHealthCheckResponse = responseString.startsWith('OK,ERRSTAT,');
+      if (isHealthCheckResponse) {
+        clearTimeout(this.healthCheckTimeout);
+
+        const healthCheckResponses = responseString.split(',');
+        const healthCheckSuccess =
+          removeSpacesAndNewlines(healthCheckResponses[2]) === 'none';
+        if (!healthCheckSuccess) {
+          serCamLogger.error(
+            `[Ser Cam] Camera error code found: ${healthCheckResponses[2]}`
+          );
         }
+
+        this.setHealthCheckInterval();
+        return;
+      }
+
+      normalOperationFlag = true;
+      // console.timeEnd('serDataTime');
+
+      if (waitingForResponseFlag) {
+        waitingForResponseFlag = false;
+        responseString = this.separateStringToObject(responseString);
+        this.receiveData(responseString);
+      } else {
+        serCamLogger.info(
+          `got the data but already rejected due to timeout (code: ${responseString}).`
+        );
       }
       this.setHealthCheckInterval();
     });
@@ -419,20 +368,15 @@ export default class serCam {
     return { result, reason, code };
   }
 
-  async receiveData(data, printed) {
+  async receiveData(data) {
     // console.log("String2 : ",data) // uncomment this for debugging
     try {
       const check = this.checkFormat(data);
 
-      if (!check.result) {
-        this.rejection.emit('reject');
-        serCamLogger.info('emit reject');
-      } else {
-        this.rejection.emit('pass');
-        serCamLogger.info('emit pass');
-      }
+      const emitMessage = !check.result ? 'reject' : 'pass';
+      this.rejection.emit(emitMessage);
 
-      await postDataToAPI(
+      postDataToAPI(
         `v1/work-order/${printingProcess.work_order_id}/assignment/${printingProcess.assignment_id}/serialization/validate`,
         {
           accuracy: isNaN(data.accuracy) ? 0 : data.accuracy,
