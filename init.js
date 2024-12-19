@@ -437,7 +437,7 @@ export default class Initialization {
       // console.log("arguments:",args);
       this.reRun(...args)})
     // if(this.firstRun){
-    console.log("registered bro")
+ 
   // }
     problematicPeripheral=null;
     if(this.bootUp){this.setSubsequenceEvent()}

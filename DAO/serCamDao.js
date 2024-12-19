@@ -158,6 +158,7 @@ export default class serCam {
     // }
 
 async serialization(){
+            console.time("serDataTime")
             clearTimeout(this.rejectTimeOut)
             this.rejection.removeAllListeners()
             serCamLogger.info("Sensor is triggered")
@@ -168,6 +169,7 @@ async serialization(){
             }
             waitingForResponseFlag=true;
             this.rejectTimeOut = setTimeout( async ()=>{
+                // console.timeEnd("serDataTime")
                 serCamLogger.error("Time out occured while waiting data from camera")
                 await this.rejector.reject(0)
                 while(this.boxIsDetected===true){
@@ -309,6 +311,7 @@ async serialization(){
     }
     listenForResponses() {
         this.socket.on('data', (response) => {
+            // console.timeEnd("serDataTime")
             // this.start_time= process.hrtime();
             
             clearTimeout(this.rejectTimeOut)
@@ -317,6 +320,7 @@ async serialization(){
             if (response) {
                 let responseString = response.toString('utf8')
                 if (responseString.startsWith("OK,ERRSTAT,")){
+                    
                     clearTimeout(this.healthCheckTimeout);
                     responseString=responseString.split(",")
                     if(removeSpacesAndNewlines(responseString[2])==="none"){
@@ -334,6 +338,7 @@ async serialization(){
                     normalOperationFlag=true;
                     if (waitingForResponseFlag){
                         waitingForResponseFlag=false
+                        console.timeEnd("serDataTime")
                         responseString = this.separateStringToObject(responseString)
                         
                         const data = this.receiveData(responseString)

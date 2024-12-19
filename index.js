@@ -90,7 +90,7 @@ middlewareLogger.info("Initialization is completed !")
 
 
 const printingProcess = new printProcess(printer, mongoDB, printerSensor) // instancing printing process class with printer and mongoDB instances as the constructor
-console.log(printingProcess)
+
 serialCamera.printProcess=printingProcess
 middlewareLogger.info(`test master : ${printingProcess.templateName}`)
 

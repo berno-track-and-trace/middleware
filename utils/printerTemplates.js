@@ -19,6 +19,7 @@ const printerTemplate = {
         
         const QRModule = ["0301"];// buffer's field 1
         const BPOM = printer.createModuleText("       BPOM RI      ",  true, 10 ,3,  0,  17,  0,  "Arial");
+        // const BPOM = printer.createModuleText("       BPOM RI      ",  true, 10 ,3,  0,  17,  0,  "Arial");
         // const BPOM = printer.createModuleText("                             ",  true, 10 ,3,  0,  17,  0,  "Arial");//29
         const QR = printer.createModuleQR(QRModule,  10,  18, 4,  0, 'Data Matrix', 'H',  10, false,  'Blank', 0);
         const BN = printer.createModuleText(`BN  ${details.BN}`,  true,  10,  154+5,  0,  22,  0,  "Arial"); 
