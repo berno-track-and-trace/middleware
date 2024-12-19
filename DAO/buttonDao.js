@@ -2,7 +2,7 @@ import pkg from 'node-libgpiod';
 const { version, Chip, Line } = pkg;
 
 export default class Button {
-  constructor(gpioPin, debounceTime = 200, longPressTime = 1000) {
+  constructor(gpioPin, debounceTime = 200, longPressTime = 1000, pollingInterval=50) {
     this.chip = new Chip(4);
     this.line = new Line(this.chip, gpioPin);
     this.debounceTime = debounceTime;
@@ -14,7 +14,7 @@ export default class Button {
     this.longPressCallback = null;
     this.instantCallback = null;
     this.fallingEdgeCallback = null;
-    this.pollingInterval=30;
+    this.pollingInterval=pollingInterval;
     
 
     this.line.requestInputMode();  // Ensure the line is in input mode
