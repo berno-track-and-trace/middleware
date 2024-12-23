@@ -3,7 +3,7 @@ import { getDataToAPI } from "./API/APICall/apiCall.js";
 import { HttpStatusCode } from "axios";
 import fs from 'fs';
 import {Mutex} from 'async-mutex'
-import { needToReInit, subsequenceReject } from "./utils/globalEventEmitter.js";
+import { needToReInit, subsequenceReject,beWS } from "./utils/globalEventEmitter.js";
 import * as child from 'node:child_process'
 import crypto from "crypto"
 import { initLogger, beWsLogger } from "./utils/logger.js";
@@ -335,30 +335,18 @@ export default class Initialization {
           if (this.aggCamWsData.status==='connected'){
             initLogger.info("Aggregation cam. websocoket for data connection is finalized")
           }else{throw new Error("Aggregation WS for data")}
-
-            if(this.backEndWS.status==='disconnected'){
-            try {
-              initLogger.info("Connecting to backend's websocket")
-              await this.backEndWS.connect()
             
-            } catch (error) {
-              initLogger.error("Error while connecting to backend websocket",error)
-            }
-            this.backEndWS.ws.on('message', (message)=>{
-              const str = message.toString()
-              beWsLogger.info(`Incoming HealthCheck from BE :${str}`)
-              try{
-                this.backEndWS.sendMessage(str)
-              }catch(err){
-                beWsLogger.error(err)
-              }
+          
+          if (!this.bootUp){
+            await this.connectToBEws()
+          }else{
+            beWS.once('serverReady',()=> {
               
+              this.connectToBEws()
             })
-           
           }
-          if (this.backEndWS.status==='connected'){
-            initLogger.info("BE's websocoket for data connection is finalized")
-          }else{throw new Error("Aggregation WS for BE")}
+
+
           if(this.aggCamWsStatus.status==='connected'){
             initLogger.info("Aggregation cam. websocoket for status connection is finalized")
           }else{throw new Error("Aggregation WS for status")} 
@@ -477,7 +465,7 @@ export default class Initialization {
           } else {
             initLogger.info('Message sent to pipe: off');
           }
-      
+          
           fs.close(fd, (err) => {
             if (err) {
               initLogger.error('Failed to close named pipe:', err);
@@ -488,6 +476,31 @@ export default class Initialization {
   
     })
   
+  }
+  async connectToBEws(){
+    if(this.backEndWS.status==='disconnected'){
+      try {
+        initLogger.info("Connecting to backend's websocket")
+        await this.backEndWS.connect()
+      
+      } catch (error) {
+        initLogger.error("Error while connecting to backend websocket",error)
+      }
+      this.backEndWS.ws.on('message', (message)=>{
+        const str = message.toString()
+        beWsLogger.info(`Incoming HealthCheck from BE :${str}`)
+        try{
+          this.backEndWS.sendMessage(str)
+        }catch(err){
+          beWsLogger.error(err)
+        }
+        
+      })
+     
+    }
+    if (this.backEndWS.status==='connected'){
+      initLogger.info("BE's websocoket for data connection is finalized")
+    }else{throw new Error("Aggregation WS for BE")}              
   }
 }
 

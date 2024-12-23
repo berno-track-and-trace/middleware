@@ -221,8 +221,8 @@ const setJobDetails = async (req, res) =>{
             details = await printingProcess.getCodeDetails(printingProcess.db)
                 // checks details here
             printingProcess.details= details;
-            
-            res.status(200).status(details)
+            apiServerLogger.info(details)
+            res.status(200).send(details)
         } catch (error) {
             res.status(400).send({error: error})
             console.log(error)
@@ -243,7 +243,7 @@ const clearJobDetails = async (req, res) =>{
         printingProcess.details= null;
         printingProcess.work_order_id=null;
         printingProcess.assignment_id=null;
-        
+        apiServerLogger.info("current job details is cleared")
         res.status(200).send({message:'Job detail successfully cleared'})
         
     } catch (error) {

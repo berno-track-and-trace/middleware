@@ -1,7 +1,7 @@
 import express from 'express';
 import routesv1 from './masterRoutes.js';
 import { apiServerLogger } from '../../utils/logger.js';
-
+import { beWS } from '../../utils/globalEventEmitter.js';
 
 const app = express();
 
@@ -16,6 +16,7 @@ routesv1(app);
  function startHTTPServer(port) {
   app.listen(port, () => {
     apiServerLogger.info(`Server is running on port ${port}`);
+    beWS.emit('serverReady')
   });
 }
 export {app, startHTTPServer};
