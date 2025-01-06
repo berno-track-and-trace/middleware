@@ -53,23 +53,30 @@ class AggregationCam {
   async setHCIinterval(){
       clearInterval(this.hcInterval)
       this.hcInterval=setInterval(async ()=>{
+        let retry=0
+        for ( retry =0; retry<3; retry++){
+          try{
+            aggCamLogger.info("perfoming normal healthcheck")
+            const status = await this.getStatus()
+            if (status!='Ok'){
+              needToReInit.emit("pleaseReInit", "ERR_AGGREGATION_CAM", "problem occured on Aggregation Camera ")
+              clearInterval(this.hcInterval)
+            }
+            // else{
+            //   // aggCamLogger.info("aggCam is ok")
+            // }
+            return;
+          }
+           catch (error) {
+            if (retry>1){
+              needToReInit.emit("pleaseReInit", "ERR_AGGREGATION_CAM", `problem occured on Aggregation Camera WebSocket${error}`)
+            }
+            aggCamLogger.error(`Got error on normal healthcheck : ${error}, on retry : ${retry}`)
+            clearInterval(this.hcInterval)
+            this.normalOperationFlag=false;
+          }
+        }
 
-        try{
-        // aggCamLogger.info("perfoming normal healthcheck")
-        const status = await this.getStatus()
-        if (status!='Ok'){
-          needToReInit.emit("pleaseReInit", "ERR_AGGREGATION_CAM", "problem occured on Aggregation Camera ")
-          // await this.pingIP()
-          clearInterval(this.hcInterval)
-        }else{
-          // aggCamLogger.info("aggCam is ok")
-        }}
-       catch (error) {
-        needToReInit.emit("pleaseReInit", "ERR_AGGREGATION_CAM", `problem occured on Aggregation Camera WebSocket${error}`)
-        aggCamLogger.error(`Got error on normal healthcheck : ${error}`)
-        clearInterval(this.hcInterval)
-        this.normalOperationFlag=false;
-      }
 
       },this.normalOperationFlag?this.hcIntervalTime+this.hcIntervalTolerance:this.hcIntervalTime)
 
