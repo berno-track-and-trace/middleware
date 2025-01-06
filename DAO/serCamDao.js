@@ -7,7 +7,6 @@ import {
   subsequenceReject,
 } from '../utils/globalEventEmitter.js';
 import { EventEmitter } from 'events';
-import pkg from 'node-libgpiod';
 import Queue from '../utils/queue.js';
 import { serCamLogger } from '../utils/logger.js';
 
