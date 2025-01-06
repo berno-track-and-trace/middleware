@@ -69,14 +69,14 @@ export default class serCam {
     this.printedTimeOutQueue.enqueue({
       printedData: printedData,
       timeOut: setTimeout(async () => {
-        // this.printedTimeOutQueue.dequeue();
+        
         if (!printedTimeOutFlag) {
           printedTimeOutFlag = true;
           this.printedTimeOutQueue.dequeue();
 
           const currentPrintSignalCount = this.printedTimeOutQueue.size();
           await new Promise((resolve) => setTimeout(resolve, 5000));
-          if (currentPrintSignalCount < this.printedTimeOutQueue.size()) {
+          if (currentPrintSignalCount < this.printedTimeOutQueue.size()) { // still in trial
             serCamLogger.error(
               '[SerCam] The camera sensor might be disconnected from GPIO, please check the connection'
             );
@@ -97,9 +97,8 @@ export default class serCam {
   }
 
   async serialization() {
-    console.log('start counter...');
-    // console.time('serDataTime');
-    clearTimeout(this.rejectTimeOut);
+   
+       clearTimeout(this.rejectTimeOut);
     this.rejection.removeAllListeners();
     serCamLogger.info('Sensor is triggered');
 
@@ -110,7 +109,6 @@ export default class serCam {
     }
     waitingForResponseFlag = true;
     this.rejectTimeOut = setTimeout(async () => {
-      // console.timeEnd("serDataTime")
       serCamLogger.error('Time out occurred while waiting data from camera');
       if (printingProcess.printer.isOccupied) {
         this.rejectCounter++;
@@ -132,12 +130,6 @@ export default class serCam {
         }
       );
 
-      //   while (this.boxIsDetected === true) {
-      //     // avoid repeat process for the same object
-      //     await this.rejector.reject(this.sensorToRejectTravelTime);
-      //     // this.rejectCounter++;
-      //   }
-
       this.rejection.removeAllListeners();
     }, this.sensorToRejectTravelTime);
 
@@ -149,9 +141,7 @@ export default class serCam {
       this.rejector.reject();
 
       this.rejection.removeAllListeners();
-      //   while (this.boxIsDetected === true) {
-      //     await this.rejector.reject();
-      //   }
+ 
 
       console.log('reject counts', this.rejectCounter);
       if (this.rejectCounter >= this.subsequenceReject) {
@@ -165,9 +155,7 @@ export default class serCam {
       serCamLogger.info('An object is passed');
       this.rejectCounter = 0;
       this.rejection.removeAllListeners();
-      //   while (this.boxIsDetected === true) {
-      //     await new Promise((resolve) => setTimeout(resolve, 50));
-      //   }
+ 
     });
   }
 
@@ -261,8 +249,7 @@ export default class serCam {
   }
   listenForResponses() {
     this.socket.on('data', (response) => {
-      // console.timeEnd("serDataTime")
-      // this.start_time= process.hrtime();
+  
 
       clearTimeout(this.rejectTimeOut);
       clearInterval(this.healthCheckInterval);
@@ -290,7 +277,7 @@ export default class serCam {
       }
 
       normalOperationFlag = true;
-      // console.timeEnd('serDataTime');
+  
 
       if (waitingForResponseFlag) {
         waitingForResponseFlag = false;
@@ -340,8 +327,7 @@ export default class serCam {
       otentifikasi_pattern1.test(code) ||
       otentifikasi_pattern2.test(code)
     ) {
-      // serCamLogger.info({'status':"Data is in a correct format:", 'code':code, 'accuracy':});
-      // console.log(data.accuracy)
+
       if (this.accuracyThreshold <= data.accuracy) {
         result = true;
       } else {
@@ -355,7 +341,7 @@ export default class serCam {
       } else {
         reason = 'PATTERN_MISMATCH';
       }
-      // serCamLogger.info(`[Ser Cam] Data is in bad format or ERROR: ${reason} on scanned code: ${code}`);
+      serCamLogger.info(`Data is in bad format or ERROR: ${reason} on scanned code: ${code}`);
       result = false;
     }
     serCamLogger.info({
