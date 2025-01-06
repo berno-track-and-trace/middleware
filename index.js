@@ -5,14 +5,11 @@ import {startHTTPServer, app}  from './API/server/server.js';
 import printProcess from './DAO/printProcessDao.js';
 import TIJPrinter from './DAO/TiJPrinterDao.js';
 import serCam from './DAO/serCamDao.js';
-import Queue from './utils/queue.js';
 import pkg from 'node-libgpiod';
 import Rejector from './DAO/rejectorDao.js'
 import MongoDB from './DAO/mongoDB.js';
 import WebSocketClient from './DAO/webSocketClient.js'
 import AggregationCam from './DAO/aggregationCamDao.js'; 
-
-import HealthChecks from './DAO/healthCheck.js';
 import Initialization from './init.js'
 import Button from './DAO/buttonDao.js';
 import LED from './DAO/ledDao.js';
@@ -30,7 +27,7 @@ const masterConfig = new lowDB('../utils/master-config.json');
 
 (async () => {
   try {
-    // Wait for initialization to complete
+    // Wait for initialization to complete // TODO ?: put all configs on masterConfigs
     await masterConfig.init();
 
     // Get all configuration values and convert to a JSON string
@@ -46,8 +43,8 @@ const mongoDB = new MongoDB(process.env.MONGODB_URI, process.env.DATABASE_NAME) 
 const { version, Chip, Line } = pkg; //setting up GPIOs
 global.chip = new Chip(4)
 global.rejectorActuator = new Line(chip, process.env.REJECTOR_OUTPUT_PIN); rejectorActuator.requestOutputMode();
-global.rizalLED = new Line(chip, process.env.AGGREGARTE_LIGHT_OUTPUT_PIN); rizalLED.requestOutputMode();
-rizalLED.setValue(0);
+global.whiteLED = new Line(chip, process.env.AGGREGARTE_LIGHT_OUTPUT_PIN); whiteLED.requestOutputMode();
+whiteLED.setValue(0);
 const yellowButton = new Button(process.env.AGGREGATE_BUTTON_INPUT_PIN)
 const greenButton = new Button(process.env.LABEL_PRINTER_INPUT_PIN)
 
@@ -70,7 +67,7 @@ const healthChecksWs = new WebSocketClient(process.env.HEALTH_CHECKS_WEBSOCKET_E
 healthChecksWs.autoReInit=true;
 
 const AggCamWsData = new WebSocketClient(process.env.WS_IP, process.env.WS_PORT,"client2", "AggCamWsData") // instancing websocket client class for aggregation
-// await AggCamWsData.connect()
+
 const AggCamWsStatus = new WebSocketClient(process.env.WS_IP, process.env.WS_PORT,"client3", "AggCamWsStatus") // instancing websocket client class for aggregation
 
 
@@ -121,7 +118,7 @@ startHTTPServer(process.env.SERVER_PORT)
 
 
 
-
+// test printing manually :
 
 // const details={
 //   BN: "TPG12344",
