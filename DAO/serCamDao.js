@@ -375,17 +375,21 @@ export default class serCam {
 
       const emitMessage = !check.result ? 'reject' : 'pass';
       this.rejection.emit(emitMessage);
-
-      postDataToAPI(
-        `v1/work-order/${printingProcess.work_order_id}/assignment/${printingProcess.assignment_id}/serialization/validate`,
-        {
-          accuracy: isNaN(data.accuracy) ? 0 : data.accuracy,
-          status: check.result ? 'passed' : 'rejected',
-          code: data.code,
-          reason: check.reason,
-          event_time: Date.now(),
-        }
-      );
+    
+      if (printingProcess.printer.isOccupied || check.code!==null) {
+        postDataToAPI(
+          `v1/work-order/${printingProcess.work_order_id}/assignment/${printingProcess.assignment_id}/serialization/validate`,
+          {
+            accuracy: isNaN(data.accuracy) ? 0 : data.accuracy,
+            status: check.result ? 'passed' : 'rejected',
+            code: data.code,
+            reason: check.reason,
+            event_time: Date.now(),
+          }
+        );
+       
+      }
+      
     } catch (error) {
       serCamLogger.error('error after receiving data: ', error);
     }
