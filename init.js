@@ -84,7 +84,7 @@ export default class Initialization {
         this.reRunning = false;
       }
     } finally {
-      // release(); // Ensure the mutex is always released
+     
     }
   }
   async run(){
