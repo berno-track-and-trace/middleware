@@ -150,31 +150,31 @@ export default class serCam {
   }
 
   async setHealthCheckInterval() {
-    // this.healthCheckInterval = setInterval(
-    //   () => {
-    //     try {
-    //       if (this.socket) {
-    //         const message = 'ERRSTAT\r'; // sendinf command ERRSTAT
-    //         // this.socket.write(message, 'utf8'); // Sending as UTF-8 encoded string
-    //         // this.healthCheckTimeout = setTimeout(() => {
-    //         //   this.running = false;
-    //         //   needToReInit.emit(
-    //         //     'pleaseReInit',
-    //         //     'ERR_SERIALIZATION_CAM',
-    //         //     'timed out occured on health check'
-    //         //   ); // ask to re-init
-    //         //   serCamLogger.error('timed out occured on health check');
-    //         // }, 500);
-    //       }
-    //     } catch (error) {
-    //       serCamLogger.error(`Healthcheck error : ${err}`);
-    //     }
-    //   },
-    //   normalOperationFlag
-    //     ? this.hcTimeInterval + this.hcTimeTolerance
-    //     : this.hcTimeInterval
-    // );
-    // normalOperationFlag = false;
+    this.healthCheckInterval = setInterval(
+      () => {
+        try {
+          if (this.socket) {
+            const message = 'ERRSTAT\r'; // sendinf command ERRSTAT
+            this.socket.write(message, 'utf8'); // Sending as UTF-8 encoded string
+            this.healthCheckTimeout = setTimeout(() => {
+              this.running = false;
+              needToReInit.emit(
+                'pleaseReInit',
+                'ERR_SERIALIZATION_CAM',
+                'timed out occured on health check'
+              ); // ask to re-init
+              serCamLogger.error('timed out occured on health check');
+            }, 500);
+          }
+        } catch (error) {
+          serCamLogger.error(`Healthcheck error : ${err}`);
+        }
+      },
+      normalOperationFlag
+        ? this.hcTimeInterval + this.hcTimeTolerance
+        : this.hcTimeInterval
+    );
+    normalOperationFlag = false;
   }
   connect() {
     return new Promise((resolve, reject) => {
@@ -258,7 +258,7 @@ export default class serCam {
           removeSpacesAndNewlines(healthCheckResponses[2]) === 'none';
         if (!healthCheckSuccess) {
           serCamLogger.error(
-            `[Ser Cam] Camera error code found: ${healthCheckResponses[2]}`
+            `Serial Camera error code found: ${healthCheckResponses[2]}`
           );
         }
 
