@@ -7,7 +7,7 @@ import { needToReInit, subsequenceReject,beWS } from "./utils/globalEventEmitter
 import * as child from 'node:child_process'
 import crypto from "crypto"
 import { initLogger, beWsLogger } from "./utils/logger.js";
-// import initializeRoutes from "./API/server/masterRoutes.js";
+
 
 let wsAndAggTimeOut = null
 const mutex = new Mutex();
@@ -43,7 +43,7 @@ export default class Initialization {
   
   }
   async reRun(peripheral,reason="no reason", rejectorCheck=false) {
-    // const release = await mutex.acquire();
+
     initLogger.info(`${peripheral} is commiting a re-initialization. Reason : ${reason}` )
     problematicPeripheral =peripheral;
     try {
@@ -127,7 +127,7 @@ export default class Initialization {
       initLogger.error("Error on stopping printer", error)
     }
     while (!end){
-      // await sleep(5)
+
       if (this.state.connectingToDB){
         try{
           if (!this.MongoDB.isConnected){
@@ -138,11 +138,7 @@ export default class Initialization {
             this.backEndWS.status='disconnected'
             throw new Error("Server is not ready")
           }
-          // if(this.backEndWS.status==='disconnected'){
-            
-          //   await this.backEndWS.connect()
-           
-          // }
+
           
 
           
@@ -320,7 +316,7 @@ export default class Initialization {
         this.greenLed.setState('blinkSlow')
         this.state.rejectorCheck=false;
         this.state.connectingToDB=true;
-        // greenButtonPressed=false
+
       }else if (this.state.finalChecks){
         
       // final checks
@@ -374,28 +370,6 @@ export default class Initialization {
           weighingScaleDao.readPrinterButton(this.greenButton);
 
 
-          // fs.open(pipePath, 'w', (err, fd) => {
-          //   if (err) {
-          //     console.error('Failed to open named pipe:', err);
-          //     return;
-          //   }
-          
-          //   fs.write(fd, 'on', (err) => {
-          //     if (err) {
-          //       console.error('Failed to write to named pipe:', err);
-          //     } else {
-          //       console.log('Message sent: on');
-          //     }
-          
-          //     fs.close(fd, (err) => {
-          //       if (err) {
-          //         console.error('Failed to close named pipe:', err);
-          //       }
-          //     });
-          //   });
-          // });
-      
-          
           
           end=true;  
           this.firstRun=false;
@@ -413,7 +387,7 @@ export default class Initialization {
       
     }
     this.serCam.sensor.setInstantCallback( ()=> {
-        // console.log(this, this.print3)
+
         this.printer.boxIsDetected=true;
         this.serCam.serialization();
     })
@@ -422,11 +396,8 @@ export default class Initialization {
     })
     needToReInit.removeAllListeners()
     needToReInit.once("pleaseReInit", (...args)=>{
-      // console.log("arguments:",args);
+
       this.reRun(...args)})
-    // if(this.firstRun){
- 
-  // }
     problematicPeripheral=null;
     if(this.bootUp){this.setSubsequenceEvent()}
     initLogger.info("Inisialization has been completed")
