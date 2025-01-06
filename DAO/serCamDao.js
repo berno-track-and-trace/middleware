@@ -11,9 +11,6 @@ import pkg from 'node-libgpiod';
 import Queue from '../utils/queue.js';
 import { serCamLogger } from '../utils/logger.js';
 
-const { version, Chip, Line } = pkg;
-// import { eventNames } from 'process';
-import { clear } from 'console';
 
 function removeSpacesAndNewlines(inputString) {
   return inputString.replace(/\s+/g, '');
@@ -31,7 +28,7 @@ export default class serCam {
     this.socket = null;
     this.listenerThread = null;
     this.rejector = rejector;
-    this.accuracyThreshold = 0.0; // need discussion
+    this.accuracyThreshold = 0.0
     this.active = false;
     this.rejection = new EventEmitter();
     this.hcTimeInterval = 10000;
@@ -40,13 +37,7 @@ export default class serCam {
     this.healthCheckTimeout = null;
     this.sensorReadingInterval = null;
     this.subsequenceReject = 3;
-    // this.setSensorCallBack();
 
-    // this.chip = new Chip(4);
-    // this.line = new Line(this.chip, 5);
-    // this.line.requestInputMode();
-
-    // this.setIntervalSensorReading(50);
 
     this.rejectTimeOut = null;
 
