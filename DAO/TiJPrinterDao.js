@@ -1,13 +1,11 @@
 import net from 'net';
 import { EventEmitter } from 'events';
-import { error } from 'console';
+
 import { Mutex } from 'async-mutex';
 
 import { needToReInit } from '../utils/globalEventEmitter.js';
 
 import { exec } from 'child_process';
-import { printer, rejector } from '../index.js';
-
 import {printerLogger} from '../utils/logger.js'
 
 
@@ -90,18 +88,17 @@ export default class TIJPrinter {
         this.healthCheckInterval = setInterval(() => {
             let rejectorCheck=false;
             this.pingIP()
-                .then(response => printerLogger.info(`Ping health check : ${response}`))
+                // .then(response => printerLogger.info(`Ping health check : ${response}`))
                 .then(async () => {
                     if (this.isOccupied) {
                         try {
-                        printerLogger.info("Checking buffer healthcheck...")
+                        // printerLogger.info("Checking buffer healthcheck...")
                         const bufferCount= await this.getBufNum()
                         if (bufferCount<this.localBufferCount){
                             printerLogger.warn({
                                 'printerBufferCount':bufferCount,
                                 'localBufferCount':this.localBufferCount
                             })
-                            // rejectorCheck=true; // TODO try to uncomment it and test
                             rejectorCheck=false;
                             printerLogger.error("Middleware possibly can't get signal from printer sensor")
                         }
