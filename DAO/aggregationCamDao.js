@@ -56,7 +56,7 @@ class AggregationCam {
         let retry=0
         for ( retry =0; retry<3; retry++){
           try{
-            aggCamLogger.info("perfoming normal healthcheck")
+            // aggCamLogger.info("perfoming normal healthcheck")
             const status = await this.getStatus()
             if (status!='Ok'){
               needToReInit.emit("pleaseReInit", "ERR_AGGREGATION_CAM", "problem occured on Aggregation Camera ")
