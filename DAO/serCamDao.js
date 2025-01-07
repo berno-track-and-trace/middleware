@@ -133,7 +133,6 @@ export default class serCam {
       this.rejection.removeAllListeners();
  
 
-      console.log('reject counts', this.rejectCounter);
       if (this.rejectCounter >= this.subsequenceReject) {
         subsequenceReject.emit('subsequenceReject');
         serCamLogger.info('subsequenceReject emitted');
@@ -331,7 +330,7 @@ export default class serCam {
       } else {
         reason = 'PATTERN_MISMATCH';
       }
-      serCamLogger.info(`Data is in bad format or ERROR: ${reason} on scanned code: ${code}`);
+      
       result = false;
     }
     serCamLogger.info({
