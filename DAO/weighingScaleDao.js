@@ -20,7 +20,7 @@ function sleep(ms) {
 function setHCweightInterval() {
   hcInterval = setInterval(async () => {
     try {
-      weighingScaleLogger.info("Normal health check on weigher")
+      // weighingScaleLogger.info("Normal health check on weigher")
 
       // await readWeight()
     } catch (error) {
@@ -169,7 +169,7 @@ async function _readWeight() {
 }
 const readPrinterButton = (button) => {
   clearInterval(hcInterval)
-  setHCweightInterval()
+  // setHCweightInterval()
   button.setShortPressCallback(async () => {
     try {
       weighingScaleLogger.info("Label Printer button is pressed.");

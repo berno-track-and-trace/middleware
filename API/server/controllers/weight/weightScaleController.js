@@ -25,12 +25,12 @@ import { apiCallLogger } from "../../../../utils/logger.js";
 const getWeight = async (req,res) =>{
     try{
         
-        clearInterval(weighingScaleDao.hcInterval);
+        // clearInterval(weighingScaleDao.hcInterval);
         apiCallLogger.info(`getWeight is called`);
         let weight= await getData()
         
         weighingScaleDao.normalProcessFlag=true;
-        weighingScaleDao.setHCweightInterval();
+        // weighingScaleDao.setHCweightInterval();
         apiCallLogger.info(`getWeight is called, the weight is ${weight}`);
         res.status(200).send({weight:weight})
     }catch(err){
