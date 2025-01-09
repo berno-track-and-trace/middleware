@@ -168,7 +168,7 @@ async function _readWeight() {
   });
 }
 const readPrinterButton = (button) => {
-  clearInterval(hcInterval)
+  // clearInterval(hcInterval)
   // setHCweightInterval()
   button.setShortPressCallback(async () => {
     try {
