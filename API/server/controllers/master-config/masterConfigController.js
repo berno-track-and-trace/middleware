@@ -112,12 +112,12 @@ const getAllConfigParameters = (req, res) => {
             {
                 parameter_name: "work_order_id",
                 parameter_value: printingProcess.work_order_id,
-                parameter_unit: 'number'
+                parameter_unit: 'string'
             },
             {
                 parameter_name: "assignment_id",
                 parameter_value: printingProcess.assignment_id,
-                parameter_unit: 'number'
+                parameter_unit: 'string'
             },
             {
                 parameter_name: "template_name",
