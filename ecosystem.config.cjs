@@ -10,8 +10,8 @@ module.exports = {
     env: {
       NODE_ENV: 'production'
     },
-    error_file: './logs/error.log',
-    out_file: './logs/out.log',
+    error_file: '/dev/null',  // Discard error logs
+    out_file: '/dev/null',    // Discard output logs
     pid_file: './logs/pid.log',
     post_start: "./gpio_control.sh 0",
     post_stop: "./gpio_control.sh 1",
