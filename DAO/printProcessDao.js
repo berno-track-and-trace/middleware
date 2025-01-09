@@ -402,7 +402,7 @@ export default class printProcess {
                 await this.db.collection('serialization')
         
                 .updateOne( { _id: serialization.id}, 
-                            { $set: { status : this.sampling?"SAMPLING":"PRINTING", update_at: Date.now()} } // update the status of the printed code upon pusing to buffer 
+                            { $set: { status : this.sampling?"SAMPLING":"PRINTING", updated_at: new Date().toISOString()} } // update the status of the printed code upon pusing to buffer 
                             )
                 this.full_code_queue.enqueue(serialization.full_code)
                 // this.serializationQueue1.enqueue(serialization)
