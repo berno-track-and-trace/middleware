@@ -1,0 +1,17 @@
+{
+    "printerProcess":{
+        "TEMPLATE_NAME":"template2"
+    },
+    "serCam":{
+        "ACCURACY_THRESHOLD":0
+    },
+    "rejector":{
+        "REJECTOR_DELAY1":1000,
+        "REJECTOR_DELAY2":10,
+        "REGEX_PATTERNS": [
+            "\\(90\\)[A-Za-z0-9]{1,16}\\(91\\)\\d{1,10}",
+            "\\(90\\)[A-Za-z0-9]{1,16}\\(10\\)[A-Za-z0-9]{1,20}\\(17\\)\\d{1,6}\\(21\\)[A-Za-z0-9]{1,20}",
+            "\\(01\\)[A-Za-z0-9]{14}\\(10\\)[A-Za-z0-9]{1,20}\\(17\\)\\d{1,6}\\(21\\)[A-Za-z0-9]{1,20}"
+        ]
+    }
+}

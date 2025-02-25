@@ -1,0 +1,11 @@
+//delete this after implementation
+
+{
+    event:'printer sensor is triggered',
+    queue_action: ['none', 'moving x SN from Q2 to Q1', ''],
+    state:['printing', 'completion', 'lastPrint'],
+    SN_to_send:
+    P_status:,
+
+
+}
